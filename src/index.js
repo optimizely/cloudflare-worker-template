@@ -1,0 +1,104 @@
+/**
+ *    Copyright 2021, Optimizely and contributors
+ *
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
+ *
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
+ */
+
+import {
+  createInstance,
+  enums as OptimizelyEnums
+} from "@optimizely/optimizely-sdk/dist/optimizely.lite.min.js";
+import { getDatafile, dispatchEvent } from "./optimizely_helper";
+
+const CLOUDFLARE_CLIENT_ENGINE = "javascript-sdk/cloudflare";
+
+addEventListener("fetch", event => {
+  event.respondWith(handleRequest(event));
+});
+
+async function handleRequest(event) {
+  // fetch datafile from optimizely CDN and cache it with cloudflare for the given number of seconds
+  const datafile = await getDatafile("YOUR_SDK_KEY_HERE", 600);
+
+  const optimizelyClient = createInstance({
+    datafile,
+
+    // keep the LOG_LEVEL to ERROR in production. Setting LOG_LEVEL to INFO or DEBUG can adversely impact performance.
+    logLevel: OptimizelyEnums.LOG_LEVEL.ERROR,
+
+    clientEngine: CLOUDFLARE_CLIENT_ENGINE
+
+    /***
+     * Optional event dispatcher. Please uncomment the following line if you want to dispatch an impression event to optimizely logx backend.
+     * When enabled, an event is dispatched asynchronously. It does not impact the response time for a particular worker but it will
+     * add to the total compute time of the worker and can impact cloudflare billing.
+     */
+
+    /* eventDispatcher: {
+      dispatchEvent: optimizelyEvent => {
+        // Tell cloudflare to wait for this promise to fullfill.
+        event.waitUntil(dispatchEvent(optimizelyEvent));
+      }
+    }, */
+
+    /* Add other Optimizely SDK initialization options here if needed */
+  });
+
+  const optimizelyUserContext = optimizelyClient.createUserContext(
+    "USER_ID_HERE",
+    {
+      /* YOUR_OPTIONAL_ATTRIBUTES_HERE */
+    }
+  );
+
+  // --- Using Optimizely Config
+  const optimizelyConfig = optimizelyClient.getOptimizelyConfig();
+
+  // --- For a single flag --- //
+  const decision = optimizelyUserContext.decide("YOUR_FLAG_HERE");
+  if (decision.enabled) {
+    console.log(
+      `The Flag "${
+        decision.flagKey
+      }" was Enabled for the user "${decision.userContext.getUserId()}"`
+    );
+  } else {
+    console.log(
+      `The Flag "${
+        decision.flagKey
+      }" was Not Enabled for the user "${decision.userContext.getUserId()}"`
+    );
+  }
+
+  // --- For all flags --- //
+  const allDecisions = optimizelyUserContext.decideAll();
+  Object.entries(allDecisions).forEach(([flagKey, decision]) => {
+    if (decision.enabled) {
+      console.log(
+        `The Flag "${
+          decision.flagKey
+        }" was Enabled for the user "${decision.userContext.getUserId()}"`
+      );
+    } else {
+      console.log(
+        `The Flag "${
+          decision.flagKey
+        }" was Not Enabled for the user "${decision.userContext.getUserId()}"`
+      );
+    }
+  });
+
+  return new Response(
+    "Welcome to the Optimizely Starter template. Check logs for decision results."
+  );
+}
