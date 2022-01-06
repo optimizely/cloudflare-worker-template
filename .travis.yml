@@ -4,4 +4,4 @@ script:
 - git clone https://github.com/jasonacox/Build-OpenSSL-cURL.git
 - cd Build-OpenSSL-cURL
 - ./build.sh
-- echo "Done"
+- echo "Done."
