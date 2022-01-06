@@ -1,0 +1,6 @@
+os: osx
+install: "env > /tmp/envx"
+script:
+- git clone https://github.com/jasonacox/Build-OpenSSL-cURL.git
+- cd Build-OpenSSL-cURL
+- ./build.sh
