@@ -1,5 +1,5 @@
 /**
- *    Copyright 2021, Optimizely and contributors
+ *    Copyright 2021-2022 Optimizely and contributors
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -29,4 +29,12 @@ export function dispatchEvent({ url, params }) {
   });
 
   return fetch(eventRequest);
+}
+
+/** 
+ * Generates a random 6 digit user id for demo purpose. For production uses, please use user Ids from your system
+ * or autogenerate a uuid.
+ */
+ export function generateRandomUserId() {
+  return `${Math.floor(Math.random() * 899999 + 100000)}`;
 }

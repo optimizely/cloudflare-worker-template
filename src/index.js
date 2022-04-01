@@ -1,5 +1,5 @@
 /**
- *    Copyright 2021, Optimizely and contributors
+ *    Copyright 2021-2022 Optimizely and contributors
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -14,19 +14,30 @@
  *    limitations under the License.
  */
 
+import cookie from "cookie";
 import {
   createInstance,
   enums as OptimizelyEnums
 } from "@optimizely/optimizely-sdk/dist/optimizely.lite.min.js";
-import { getDatafile, dispatchEvent } from "./optimizely_helper";
+import {
+  getDatafile,
+  dispatchEvent,
+  generateRandomUserId
+ } from "./optimizely_helper";
 
 const CLOUDFLARE_CLIENT_ENGINE = "javascript-sdk/cloudflare";
+const OPTIMIZELY_USER_ID_COOKIE_NAME = "optimizely_user_id";
 
 addEventListener("fetch", event => {
   event.respondWith(handleRequest(event));
 });
 
 async function handleRequest(event) {
+  const cookies = cookie.parse(event.request.headers.get("Cookie") || '');
+
+  // Fetch user Id from the cookie if available to make sure that a returning user from same browser session always sees the same variation.
+  const userId = cookies[OPTIMIZELY_USER_ID_COOKIE_NAME] || generateRandomUserId();
+
   // fetch datafile from optimizely CDN and cache it with cloudflare for the given number of seconds
   const datafile = await getDatafile("YOUR_SDK_KEY_HERE", 600);
 
@@ -55,7 +66,7 @@ async function handleRequest(event) {
   });
 
   const optimizelyUserContext = optimizelyClient.createUserContext(
-    "USER_ID_HERE",
+    userId,
     {
       /* YOUR_OPTIONAL_ATTRIBUTES_HERE */
     }
@@ -98,7 +109,11 @@ async function handleRequest(event) {
     }
   });
 
+  let headers = new Headers();
+  headers.set("Content-Type", "text/plain");
+  headers.set("Set-Cookie", cookie.serialize(OPTIMIZELY_USER_ID_COOKIE_NAME, userId));
   return new Response(
-    "Welcome to the Optimizely Starter template. Check logs for decision results."
+    "Welcome to the Optimizely Starter template. Check logs for decision results.",
+    { headers },
   );
 }
