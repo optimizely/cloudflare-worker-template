@@ -45,10 +45,10 @@ export function dispatchEvent({ url, params }) {
  * Answer by Jeff Ward:
  * https://stackoverflow.com/users/1026023/jeff-ward
  */
-var lut = []; for (var i=0; i<256; i++) { lut[i] = (i<16?'0':'')+(i).toString(16); }
+const lut = []; for (let i=0; i<256; i++) { lut[i] = (i<16?'0':'')+(i).toString(16); }
 export function generateRandomUserId() {
-  var d0 = Math.random()*0xffffffff|0;
-  var d1 = Math.random()*0xffffffff|0;
+  const d0 = Math.random()*0xffffffff|0;
+  const d1 = Math.random()*0xffffffff|0;
   return lut[d0&0xff]+lut[d0>>8&0xff]+'-'+lut[d0>>16&0xff]+lut[d0>>24&0xff]+'-'+
   lut[d1&0xff]+lut[d1>>8&0xff]+'-'+lut[d1>>16&0x0f|0x40]+lut[d1>>24&0xff];
 }
