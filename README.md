@@ -11,7 +11,7 @@ You can deploy code behind feature flags, experiment with A/B tests, and roll ou
 > Starter Kit for running Optimizely Full Stack feature flags and experiments on Fastly's Compute@Edge offering.
 
 
-The Optimizely worker template for Cloudflare worker embeds and extends our [JavaScript SDK](https://docs.developers.optimizely.com/experimentation/v4.0.0-full-stack/docs/javascript-node-sdk) to provide a starting point for you to implement experimentation and feature flagging for your experiences at the edge. For a guide to getting started with our platform more generally, this can be combined with the steps outlined in our [JavaScript Quickstart](https://docs.developers.optimizely.com/experimentation/v4.0.0-full-stack/docs/javascript-node-quickstart). 
+The Optimizely worker template for Cloudflare workers embeds and extends our [JavaScript SDK](https://docs.developers.optimizely.com/experimentation/v4.0.0-full-stack/docs/javascript-node-sdk) to provide a starting point for you to implement experimentation and feature flagging for your experiences at the edge. For a guide to getting started with our platform more generally, this can be combined with the steps outlined in our [JavaScript Quickstart](https://docs.developers.optimizely.com/experimentation/v4.0.0-full-stack/docs/javascript-node-quickstart). 
 
 ### Caching with cloudflare
 This template uses Cloudflare cache API to provide performant caching for the [Optimizely Datafile](https://docs.developers.optimizely.com/experimentation/v4.0.0-full-stack/docs/manage-config-datafile).
@@ -26,14 +26,14 @@ For more information on how Optimizely Full Stack SDKs assign users to feature f
 
 ### Prerequisites
 
-In order to use this template, you will need to:
+You will need to complete the following prerequisites to use this template:
 
    - Install the [Wrangler CLI](https://developers.cloudflare.com/workers/cli-wrangler).
    - Have an Optimizely account. If you do not have an account, you can [register for a free account](https://www.optimizely.com/products/intelligence/full-stack-experimentation/).
 
 ### Get started
 
-1. To generate a project using this template.
+1. Generate a project using this sample template.
 
    ```
    wrangler generate projectname https://github.com/optimizely/cloudflare-worker-template
@@ -48,19 +48,19 @@ In order to use this template, you will need to:
 
 4. Update your Optimizely `sdkKey`, `flagKey` and `userId` in `src/index.js`. Your SDK keys can be found in the Optimizely application under **Settings**.
 
-5. To test and debug the worker locally.
+5. Test and debug the worker locally.
 
    ```
    wrangler dev
    ```
 
-6. To deploy the worker on cloudflare.
+6. Deploy the worker on Cloudflare.
 
    ```
    wrangler publish
    ```
 
-7. To optionally tail the logs for debugging when accessing worker deployed on cloudflare.
+7. Optionally tail the logs for debugging when accessing worker deployed on Cloudflare.
    ```
    wrangler tail -f pretty
    ```
