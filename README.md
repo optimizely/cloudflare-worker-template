@@ -8,7 +8,7 @@ You can deploy code behind feature flags, experiment with A/B tests, and roll ou
 
 ## Optimizely + Cloudflare Worker Template
 
-> Starter Kit for running Optimizely Full Stack feature flags and experiments on Cloudflare Workers offering.
+> Starter Kit for running Optimizely Full Stack feature flags and experiments on Cloudflare Workers.
 
 
 The Optimizely worker template for Cloudflare Workers embeds and extends our [JavaScript SDK](https://docs.developers.optimizely.com/experimentation/v4.0.0-full-stack/docs/javascript-node-sdk) to provide a starting point for you to implement experimentation and feature flagging for your experiences at the edge. For a guide to getting started with our platform more generally, this can be combined with the steps outlined in our [JavaScript Quickstart](https://docs.developers.optimizely.com/experimentation/v4.0.0-full-stack/docs/javascript-node-quickstart). 
