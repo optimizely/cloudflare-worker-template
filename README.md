@@ -8,12 +8,12 @@ You can deploy code behind feature flags, experiment with A/B tests, and roll ou
 
 ## Optimizely + Cloudflare Worker Template
 
-> Starter Kit for running Optimizely Full Stack feature flags and experiments on Fastly's Compute@Edge offering.
+> Starter Kit for running Optimizely Full Stack feature flags and experiments on Cloudflare Workers offering.
 
 
-The Optimizely worker template for Cloudflare workers embeds and extends our [JavaScript SDK](https://docs.developers.optimizely.com/experimentation/v4.0.0-full-stack/docs/javascript-node-sdk) to provide a starting point for you to implement experimentation and feature flagging for your experiences at the edge. For a guide to getting started with our platform more generally, this can be combined with the steps outlined in our [JavaScript Quickstart](https://docs.developers.optimizely.com/experimentation/v4.0.0-full-stack/docs/javascript-node-quickstart). 
+The Optimizely worker template for Cloudflare Workers embeds and extends our [JavaScript SDK](https://docs.developers.optimizely.com/experimentation/v4.0.0-full-stack/docs/javascript-node-sdk) to provide a starting point for you to implement experimentation and feature flagging for your experiences at the edge. For a guide to getting started with our platform more generally, this can be combined with the steps outlined in our [JavaScript Quickstart](https://docs.developers.optimizely.com/experimentation/v4.0.0-full-stack/docs/javascript-node-quickstart). 
 
-### Caching with cloudflare
+### Caching with Cloudflare
 This template uses Cloudflare cache API to provide performant caching for the [Optimizely Datafile](https://docs.developers.optimizely.com/experimentation/v4.0.0-full-stack/docs/manage-config-datafile).
 
 ### Identity Management
@@ -60,7 +60,7 @@ You will need to complete the following prerequisites to use this template:
    wrangler publish
    ```
 
-7. Optionally tail the logs for debugging when accessing worker deployed on Cloudflare.
+7. Optionally, tail the logs for debugging when accessing worker deployed on Cloudflare.
    ```
    wrangler tail -f pretty
    ```
