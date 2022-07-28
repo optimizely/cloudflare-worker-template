@@ -73,4 +73,4 @@ Please see [CONTRIBUTING](CONTRIBUTING.md).
 - [Cloudflare Workers](https://workers.cloudflare.com/)
 - [Cloudflare Workers documentation](https://developers.cloudflare.com/workers/)
 - [Cloudflare Workers tutorials](https://developers.cloudflare.com/workers/tutorials)
-- [Cloudflare Workers with Optimizely documentation](https://docs.developers.optimizely.com/experimentation/v4.0.0-full-stack/docs/cloudflare)
+- [Cloudflare Workers with Optimizely documentation](https://docs.developers.optimizely.com/experimentation/v4.0.0-full-stack/docs/cloudflare-workers)
