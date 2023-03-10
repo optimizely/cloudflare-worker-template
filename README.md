@@ -8,7 +8,7 @@ Optimizely Rollouts is [free feature flags](https://www.optimizely.com/free-feat
 
 ## Get Started
 
-Refer to the [Optimizely Cloudflare Workers Starter Kit documentation page](https://docs.developers.optimizely.com/experimentation/v4.0.0-full-stack/docs/cloudflare-workers) for detailed instructions about using this starter kit.
+Refer to the [Optimizely Cloudflare Workers Starter Kit documentation](https://docs.developers.optimizely.com/experimentation/v4.0.0-full-stack/docs/cloudflare-workers) for detailed instructions about using this starter kit.
 
 ### Prerequisites
 
@@ -90,7 +90,9 @@ For more information about Cloudflare Workers, you may visit the following resou
 - [Cloudflare Workers tutorials](https://developers.cloudflare.com/workers/tutorials)
 - [Cloudflare Workers with Optimizely documentation](https://docs.developers.optimizely.com/experimentation/v4.0.0-full-stack/docs/cloudflare-workers)
 
-## Contributing
+## SDK Development
+
+### Contributing
 
 Please see [CONTRIBUTING](CONTRIBUTING.md).
 
@@ -125,8 +127,6 @@ Please see [CONTRIBUTING](CONTRIBUTING.md).
 - Akamai EdgeWorkers - https://github.com/optimizely/akamai-edgeworker-starter-kit
 
 - AWS Lambda@Edge - https://github.com/optimizely/aws-lambda-at-edge-starter-kit
-
-- Cloudflare Workers - https://github.com/optimizely/cloudflare-worker-template
 
 - Fastly Compute@Edge - https://github.com/optimizely/fastly-compute-starter-kit
 
