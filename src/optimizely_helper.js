@@ -17,7 +17,7 @@
 export async function getDatafile(sdkKey, ttl) {
   const datafileResponse = await fetch(
     `https://cdn.optimizely.com/datafiles/${sdkKey}.json`,
-    { cf: { cachTtl: ttl } }
+    { cf: { cacheTtl: ttl } }
   );
   return await datafileResponse.text();
 }
