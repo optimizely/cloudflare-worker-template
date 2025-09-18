@@ -19,7 +19,7 @@ import cookie from "cookie";
 import {
   createInstance,
   enums as OptimizelyEnums,
-} from "@optimizely/optimizely-sdk/dist/optimizely.lite.min.js";
+} from "@optimizely/optimizely-sdk/dist/optimizely.universal.min.js";
 import { getDatafile, dispatchEvent } from "./optimizely_helper";
 
 const CLOUDFLARE_CLIENT_ENGINE = "javascript-sdk/cloudflare";
