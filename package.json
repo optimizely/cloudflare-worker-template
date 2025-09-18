@@ -7,13 +7,18 @@
   "main": "src/index.js",
   "private": true,
   "scripts": {
-    "format": "prettier --write '**/*.{js,css,json,md}'"
+    "format": "prettier --write '**/*.{js,css,json,md}'",
+    "dev": "miniflare src/index.js --wrangler --env development",
+    "start": "miniflare src/index.js --wrangler",
+    "test": "vitest run"
   },
   "dependencies": {
     "@optimizely/optimizely-sdk": "^6.1.0",
     "cookie": "^1.0.2"
   },
   "devDependencies": {
-    "prettier": "^3.6.2"
+    "prettier": "^3.6.2",
+    "miniflare": "^4.20250917.0",
+    "vitest": "^3.2.4"
   }
 }
