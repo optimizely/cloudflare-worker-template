@@ -19,6 +19,7 @@ import { getOptimizelyClient } from "./optimizely_helper";
 
 const OPTIMIZELY_USER_ID_COOKIE_NAME = "optimizely_user_id";
 
+// Cloudflare Worker entry point
 export default {
 	async fetch(request, env, ctx) {
 		return handleRequest(request, env, ctx);
@@ -33,7 +34,7 @@ async function handleRequest(request, env, ctx) {
 	const userId = cookies[OPTIMIZELY_USER_ID_COOKIE_NAME] || crypto.randomUUID();
 
 	// Get the cached Optimizely client (refreshes datafile if needed)
-	const optimizelyClient = await getOptimizelyClient(ctx);
+	const optimizelyClient = await getOptimizelyClient(env, ctx);
 
 	const optimizelyUserContext = optimizelyClient.createUserContext(userId, {
 		// Add optional user attributes here as key-value pairs for example

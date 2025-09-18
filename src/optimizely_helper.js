@@ -40,12 +40,21 @@ export function dispatchEvent({ url, params }) {
 	return fetch(eventRequest);
 }
 
-export async function getOptimizelyClient(ctx) {
+export async function getOptimizelyClient(env, ctx) {
 	const now = Date.now();
+	
+	// Get SDK key from environment variables
+	const sdkKey = env.OPTIMIZELY_SDK_KEY;
+	if (!sdkKey) {
+		throw new Error(
+			'OPTIMIZELY_SDK_KEY environment variable is required. ' +
+			'Set it in wrangler.jsonc or use: wrangler secret put OPTIMIZELY_SDK_KEY'
+		);
+	}
 	
 	// Initialize client or refresh datafile if cache expired
 	if (!optimizelyClient || (now - lastDatafileUpdate) > DATAFILE_CACHE_TTL) {
-		const datafile = await getDatafile("YOUR_SDK_KEY_HERE", 600);
+		const datafile = await getDatafile(sdkKey, 600);
 		
 		if (!optimizelyClient) {
 			// Create client for the first time
