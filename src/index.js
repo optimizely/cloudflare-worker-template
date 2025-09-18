@@ -14,12 +14,8 @@
  * limitations under the License.
  */
 
-
 import cookie from "cookie";
-import {
-  createInstance,
-  LogLevel,
-} from "@optimizely/optimizely-sdk/universal";
+import { createInstance, LogLevel } from "@optimizely/optimizely-sdk/universal";
 import { getDatafile, dispatchEvent } from "./optimizely_helper";
 
 const CLOUDFLARE_CLIENT_ENGINE = "javascript-sdk/cloudflare";
@@ -28,7 +24,7 @@ const OPTIMIZELY_USER_ID_COOKIE_NAME = "optimizely_user_id";
 export default {
   async fetch(request, env, ctx) {
     return handleRequest(request, env, ctx);
-  }
+  },
 };
 
 async function handleRequest(request, env, ctx) {
