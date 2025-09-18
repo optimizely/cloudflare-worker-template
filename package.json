@@ -1,5 +1,6 @@
 {
   "private": true,
+  "type": "module",
   "name": "optimizely-cloudflare-worker-template",
   "version": "2.0.0",
   "description": "A template for kick starting a Cloudflare Workers project with Optimizely",
