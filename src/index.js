@@ -18,19 +18,21 @@
 import cookie from "cookie";
 import {
   createInstance,
-  enums as OptimizelyEnums,
-} from "@optimizely/optimizely-sdk/dist/optimizely.universal.min.js";
+  LogLevel,
+} from "@optimizely/optimizely-sdk/universal";
 import { getDatafile, dispatchEvent } from "./optimizely_helper";
 
 const CLOUDFLARE_CLIENT_ENGINE = "javascript-sdk/cloudflare";
 const OPTIMIZELY_USER_ID_COOKIE_NAME = "optimizely_user_id";
 
-addEventListener("fetch", (event) => {
-  event.respondWith(handleRequest(event));
-});
+export default {
+  async fetch(request, env, ctx) {
+    return handleRequest(request, env, ctx);
+  }
+};
 
-async function handleRequest(event) {
-  const cookies = cookie.parse(event.request.headers.get("Cookie") || "");
+async function handleRequest(request, env, ctx) {
+  const cookies = cookie.parse(request.headers.get("Cookie") || "");
 
   // Fetch user Id from the cookie if available to make sure that a returning user from same browser session always sees the same variation.
   const userId = cookies[OPTIMIZELY_USER_ID_COOKIE_NAME] || crypto.randomUUID();
@@ -42,7 +44,7 @@ async function handleRequest(event) {
     datafile,
 
     // keep the LOG_LEVEL to ERROR in production. Setting LOG_LEVEL to INFO or DEBUG can adversely impact performance.
-    logLevel: OptimizelyEnums.LOG_LEVEL.ERROR,
+    logLevel: LogLevel.Error,
 
     clientEngine: CLOUDFLARE_CLIENT_ENGINE,
 
@@ -54,8 +56,8 @@ async function handleRequest(event) {
 
     /* eventDispatcher: {
       dispatchEvent: optimizelyEvent => {
-        // Tell cloudflare to wait for this promise to fullfill.
-        event.waitUntil(dispatchEvent(optimizelyEvent));
+        // Tell cloudflare to wait for this promise to fulfill.
+        ctx.waitUntil(dispatchEvent(optimizelyEvent));
       }
     }, */
 
