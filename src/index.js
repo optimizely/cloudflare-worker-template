@@ -70,13 +70,13 @@ async function handleRequest(request, env, ctx) {
   // --- For a single flag --- //
   const decision = optimizelyUserContext.decide("YOUR_FLAG_HERE");
   if (decision.enabled) {
-    console.log(
+    console.info(
       `The Flag "${
         decision.flagKey
       }" was Enabled for the user "${decision.userContext.getUserId()}"`,
     );
   } else {
-    console.log(
+    console.info(
       `The Flag "${
         decision.flagKey
       }" was Not Enabled for the user "${decision.userContext.getUserId()}"`,
@@ -87,13 +87,13 @@ async function handleRequest(request, env, ctx) {
   const allDecisions = optimizelyUserContext.decideAll();
   Object.entries(allDecisions).forEach(([flagKey, decision]) => {
     if (decision.enabled) {
-      console.log(
+      console.info(
         `The Flag "${
           decision.flagKey
         }" was Enabled for the user "${decision.userContext.getUserId()}"`,
       );
     } else {
-      console.log(
+      console.info(
         `The Flag "${
           decision.flagKey
         }" was Not Enabled for the user "${decision.userContext.getUserId()}"`,
