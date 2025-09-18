@@ -7,7 +7,8 @@
   "main": "src/index.js",
   "private": true,
   "scripts": {
-    "format": "prettier --write '**/*.{js,css,json,md}'",
+    "format": "biome format",
+    "lint": "biome check",
     "dev": "miniflare src/index.js --wrangler --env development",
     "start": "miniflare src/index.js --wrangler",
     "test": "vitest run"
@@ -17,7 +18,7 @@
     "cookie": "^1.0.2"
   },
   "devDependencies": {
-    "prettier": "^3.6.2",
+    "@biomejs/biome": "^2.2.4",
     "miniflare": "^4.20250917.0",
     "vitest": "^3.2.4"
   }
