@@ -29,8 +29,8 @@ export default {
 async function handleRequest(request, env, ctx) {
 	const cookies = cookie.parse(request.headers.get("Cookie") || "");
 
-	// Fetch user Id from the cookie if available to make sure that a returning user from 
-  // same browser session always sees the same variation.
+	// Fetch user Id from the cookie if available to make sure that a returning user from
+	// same browser session always sees the same variation.
 	const userId = cookies[OPTIMIZELY_USER_ID_COOKIE_NAME] || crypto.randomUUID();
 
 	// Get the cached Optimizely client (refreshes datafile if needed)

@@ -42,49 +42,49 @@ export function dispatchEvent({ url, params }) {
 
 export async function getOptimizelyClient(env, ctx) {
 	const now = Date.now();
-	
+
 	// Get SDK key from environment variables
 	const sdkKey = env.OPTIMIZELY_SDK_KEY;
 	if (!sdkKey) {
 		throw new Error(
-			'OPTIMIZELY_SDK_KEY environment variable is required. ' +
-			'Set it in wrangler.jsonc or use: wrangler secret put OPTIMIZELY_SDK_KEY'
+			"OPTIMIZELY_SDK_KEY environment variable is required. " +
+				"Set it in wrangler.jsonc or use: wrangler secret put OPTIMIZELY_SDK_KEY",
 		);
 	}
-	
+
 	// Initialize client or refresh datafile if cache expired
-	if (!optimizelyClient || (now - lastDatafileUpdate) > DATAFILE_CACHE_TTL) {
+	if (!optimizelyClient || now - lastDatafileUpdate > DATAFILE_CACHE_TTL) {
 		const datafile = await getDatafile(sdkKey, 600);
-		
+
 		if (!optimizelyClient) {
 			// Create client for the first time
 			optimizelyClient = createInstance({
 				datafile,
 				logLevel: LogLevel.Error,
 				clientEngine: CLOUDFLARE_CLIENT_ENGINE,
-				
+
 				/***
 				 * Optional event dispatcher. Please uncomment the following lines if you want to dispatch an impression event to optimizely logx backend.
 				 * When enabled, an event is dispatched asynchronously. It does not impact the response time for a particular worker but it will
 				 * add to the total compute time of the worker and can impact cloudflare billing.
 				 */
-				
+
 				/* eventDispatcher: {
 					dispatchEvent: optimizelyEvent => {
 						// Tell cloudflare to wait for this promise to fulfill.
 						ctx.waitUntil(dispatchEvent(optimizelyEvent));
 					}
 				}, */
-				
+
 				/* Add other Optimizely SDK initialization options here if needed */
 			});
 		} else {
 			// Update existing client with new datafile
 			optimizelyClient.setDatafile(datafile);
 		}
-		
+
 		lastDatafileUpdate = now;
 	}
-	
+
 	return optimizelyClient;
 }
