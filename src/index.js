@@ -15,7 +15,6 @@
  */
 
 
-import { v4 } from "uuid";
 import cookie from "cookie";
 import {
   createInstance,
@@ -34,7 +33,7 @@ async function handleRequest(event) {
   const cookies = cookie.parse(event.request.headers.get("Cookie") || "");
 
   // Fetch user Id from the cookie if available to make sure that a returning user from same browser session always sees the same variation.
-  const userId = cookies[OPTIMIZELY_USER_ID_COOKIE_NAME] || v4();
+  const userId = cookies[OPTIMIZELY_USER_ID_COOKIE_NAME] || crypto.randomUUID();
 
   // fetch datafile from optimizely CDN and cache it with cloudflare for the given number of seconds
   const datafile = await getDatafile("YOUR_SDK_KEY_HERE", 600);
