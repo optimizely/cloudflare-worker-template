@@ -11,7 +11,8 @@
 		"lint": "biome check --write ./src",
 		"dev": "miniflare src/index.js --wrangler --env development",
 		"start": "miniflare src/index.js --wrangler",
-		"test": "vitest run"
+		"test": "vitest run",
+    "build": "npx wrangler deploy --dry-run --outdir dist"
 	},
 	"dependencies": {
 		"@optimizely/optimizely-sdk": "^6.1.0",
