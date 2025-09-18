@@ -1,25 +1,25 @@
 {
-  "name": "optimizely-cloudflare-worker-template",
-  "description": "A template for kick starting a Cloudflare Workers project with Optimizely",
-  "version": "2.0.0",
-  "license": "Apache-2.0",
-  "type": "module",
-  "main": "src/index.js",
-  "private": true,
-  "scripts": {
-    "format": "biome format",
-    "lint": "biome check",
-    "dev": "miniflare src/index.js --wrangler --env development",
-    "start": "miniflare src/index.js --wrangler",
-    "test": "vitest run"
-  },
-  "dependencies": {
-    "@optimizely/optimizely-sdk": "^6.1.0",
-    "cookie": "^1.0.2"
-  },
-  "devDependencies": {
-    "@biomejs/biome": "^2.2.4",
-    "miniflare": "^4.20250917.0",
-    "vitest": "^3.2.4"
-  }
+	"name": "optimizely-cloudflare-worker-template",
+	"description": "A template for kick starting a Cloudflare Workers project with Optimizely",
+	"version": "2.0.0",
+	"license": "Apache-2.0",
+	"type": "module",
+	"main": "src/index.js",
+	"private": true,
+	"scripts": {
+		"format": "biome format --write",
+		"lint": "biome check --write",
+		"dev": "miniflare src/index.js --wrangler --env development",
+		"start": "miniflare src/index.js --wrangler",
+		"test": "vitest run"
+	},
+	"dependencies": {
+		"@optimizely/optimizely-sdk": "^6.1.0",
+		"cookie": "^1.0.2"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "^2.2.4",
+		"miniflare": "^4.20250917.0",
+		"vitest": "^3.2.4"
+	}
 }

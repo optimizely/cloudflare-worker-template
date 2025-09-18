@@ -1,4 +1,4 @@
 module.exports = {
-  target: "webworker",
-  entry: "./src/index.js",
+	target: "webworker",
+	entry: "./src/index.js",
 };
