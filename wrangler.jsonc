@@ -1,0 +1,20 @@
+{
+  "name": "optimizely-cloudflare-template",
+  "main": "src/index.js",
+  "compatibility_date": "2025-09-18",
+  "compatibility_flags": ["nodejs_compat"],
+  "account_id": "",
+  "workers_dev": true,
+  "route": "",
+  "zone_id": "",
+  "minify": true,
+  "upload_source_maps": true,
+  "build": {
+    "command": "npx webpack",
+    "cwd": "./",
+    "watch_dir": "src"
+  },
+  "vars": {
+    "OPTIMIZELY_SDK_KEY": "YOUR_SDK_KEY_HERE"
+  }
+}
