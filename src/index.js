@@ -14,11 +14,9 @@
  * limitations under the License.
  */
 
-import { createInstance, LogLevel } from "@optimizely/optimizely-sdk/universal";
 import cookie from "cookie";
-import { dispatchEvent, getDatafile } from "./optimizely_helper";
+import { getOptimizelyClient } from "./optimizely_helper";
 
-const CLOUDFLARE_CLIENT_ENGINE = "javascript-sdk/cloudflare";
 const OPTIMIZELY_USER_ID_COOKIE_NAME = "optimizely_user_id";
 
 export default {
@@ -30,44 +28,20 @@ export default {
 async function handleRequest(request, env, ctx) {
 	const cookies = cookie.parse(request.headers.get("Cookie") || "");
 
-	// Fetch user Id from the cookie if available to make sure that a returning user from same browser session always sees the same variation.
+	// Fetch user Id from the cookie if available to make sure that a returning user from 
+  // same browser session always sees the same variation.
 	const userId = cookies[OPTIMIZELY_USER_ID_COOKIE_NAME] || crypto.randomUUID();
 
-	// fetch datafile from optimizely CDN and cache it with cloudflare for the given number of seconds
-	const datafile = await getDatafile("YOUR_SDK_KEY_HERE", 600);
-
-	const optimizelyClient = createInstance({
-		datafile,
-
-		// keep the LOG_LEVEL to ERROR in production. Setting LOG_LEVEL to INFO or DEBUG can adversely impact performance.
-		logLevel: LogLevel.Error,
-
-		clientEngine: CLOUDFLARE_CLIENT_ENGINE,
-
-		/***
-		 * Optional event dispatcher. Please uncomment the following line if you want to dispatch an impression event to optimizely logx backend.
-		 * When enabled, an event is dispatched asynchronously. It does not impact the response time for a particular worker but it will
-		 * add to the total compute time of the worker and can impact cloudflare billing.
-		 */
-
-		/* eventDispatcher: {
-      dispatchEvent: optimizelyEvent => {
-        // Tell cloudflare to wait for this promise to fulfill.
-        ctx.waitUntil(dispatchEvent(optimizelyEvent));
-      }
-    }, */
-
-		/* Add other Optimizely SDK initialization options here if needed */
-	});
+	// Get the cached Optimizely client (refreshes datafile if needed)
+	const optimizelyClient = await getOptimizelyClient(ctx);
 
 	const optimizelyUserContext = optimizelyClient.createUserContext(userId, {
-		/* YOUR_OPTIONAL_ATTRIBUTES_HERE */
+		// Add optional user attributes here as key-value pairs for example
+		// location: "New York City",
+		// device: "mobile"
 	});
 
-	// --- Using Optimizely Config
-	const optimizelyConfig = optimizelyClient.getOptimizelyConfig();
-
-	// --- For a single flag --- //
+	// Decide for a single flag
 	const decision = optimizelyUserContext.decide("YOUR_FLAG_HERE");
 	if (decision.enabled) {
 		console.info(
@@ -83,9 +57,9 @@ async function handleRequest(request, env, ctx) {
 		);
 	}
 
-	// --- For all flags --- //
+	// Decide for all flags
 	const allDecisions = optimizelyUserContext.decideAll();
-	Object.entries(allDecisions).forEach(([flagKey, decision]) => {
+	Object.entries(allDecisions).forEach(([_flagKey, decision]) => {
 		if (decision.enabled) {
 			console.info(
 				`The Flag "${
