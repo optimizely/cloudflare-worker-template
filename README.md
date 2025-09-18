@@ -29,9 +29,9 @@ Refer to the [Optimizely Cloudflare Workers Starter Kit documentation](https://d
 2. Add `account_id` in `wrangler.toml`. If you dont know the account ID, just do `wrangler dev` and the CLI will prompt you with the account ID and the instructions to add it.
 
 3. Install node packages.
-    ```
-    npm install
-    ```
+   ```
+   npm install
+   ```
 
 ## Use the Cloudflare Workers Starter Kit
 
@@ -46,7 +46,6 @@ Sample code is included in `src/main.js` that shows examples of initializing and
 Additional platform-specific code is included in `src/optimizely_helper.js` which provide workarounds for otherwise common features of the Optimizely SDK.
 
 1. Update your Optimizely `sdkKey`, `flagKey` and `userId` in `src/index.js`. Your SDK keys can be found in the Optimizely application under **Settings**.
-
 
 2. Test and debug the worker locally.
 
@@ -79,7 +78,7 @@ Out of the box, Optimizely's Feature Experimentation SDKs require a user-provide
 
 ### Bucketing
 
-For more information on how Optimizely Feature Experimentation SDKs assign users to feature flags and experiments, see [the documentation on how bucketing works](https://docs.developers.optimizely.com/experimentation/v4.0.0-full-stack/docs/how-bucketing-works). 
+For more information on how Optimizely Feature Experimentation SDKs assign users to feature flags and experiments, see [the documentation on how bucketing works](https://docs.developers.optimizely.com/experimentation/v4.0.0-full-stack/docs/how-bucketing-works).
 
 ### Cloudflare Workers
 

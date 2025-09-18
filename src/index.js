@@ -18,22 +18,19 @@ import { v4 } from "uuid";
 import cookie from "cookie";
 import {
   createInstance,
-  enums as OptimizelyEnums
+  enums as OptimizelyEnums,
 } from "@optimizely/optimizely-sdk/dist/optimizely.lite.min.js";
-import {
-  getDatafile,
-  dispatchEvent,
- } from "./optimizely_helper";
+import { getDatafile, dispatchEvent } from "./optimizely_helper";
 
 const CLOUDFLARE_CLIENT_ENGINE = "javascript-sdk/cloudflare";
 const OPTIMIZELY_USER_ID_COOKIE_NAME = "optimizely_user_id";
 
-addEventListener("fetch", event => {
+addEventListener("fetch", (event) => {
   event.respondWith(handleRequest(event));
 });
 
 async function handleRequest(event) {
-  const cookies = cookie.parse(event.request.headers.get("Cookie") || '');
+  const cookies = cookie.parse(event.request.headers.get("Cookie") || "");
 
   // Fetch user Id from the cookie if available to make sure that a returning user from same browser session always sees the same variation.
   const userId = cookies[OPTIMIZELY_USER_ID_COOKIE_NAME] || v4();
@@ -47,7 +44,7 @@ async function handleRequest(event) {
     // keep the LOG_LEVEL to ERROR in production. Setting LOG_LEVEL to INFO or DEBUG can adversely impact performance.
     logLevel: OptimizelyEnums.LOG_LEVEL.ERROR,
 
-    clientEngine: CLOUDFLARE_CLIENT_ENGINE
+    clientEngine: CLOUDFLARE_CLIENT_ENGINE,
 
     /***
      * Optional event dispatcher. Please uncomment the following line if you want to dispatch an impression event to optimizely logx backend.
@@ -65,12 +62,9 @@ async function handleRequest(event) {
     /* Add other Optimizely SDK initialization options here if needed */
   });
 
-  const optimizelyUserContext = optimizelyClient.createUserContext(
-    userId,
-    {
-      /* YOUR_OPTIONAL_ATTRIBUTES_HERE */
-    }
-  );
+  const optimizelyUserContext = optimizelyClient.createUserContext(userId, {
+    /* YOUR_OPTIONAL_ATTRIBUTES_HERE */
+  });
 
   // --- Using Optimizely Config
   const optimizelyConfig = optimizelyClient.getOptimizelyConfig();
@@ -81,13 +75,13 @@ async function handleRequest(event) {
     console.log(
       `The Flag "${
         decision.flagKey
-      }" was Enabled for the user "${decision.userContext.getUserId()}"`
+      }" was Enabled for the user "${decision.userContext.getUserId()}"`,
     );
   } else {
     console.log(
       `The Flag "${
         decision.flagKey
-      }" was Not Enabled for the user "${decision.userContext.getUserId()}"`
+      }" was Not Enabled for the user "${decision.userContext.getUserId()}"`,
     );
   }
 
@@ -98,20 +92,23 @@ async function handleRequest(event) {
       console.log(
         `The Flag "${
           decision.flagKey
-        }" was Enabled for the user "${decision.userContext.getUserId()}"`
+        }" was Enabled for the user "${decision.userContext.getUserId()}"`,
       );
     } else {
       console.log(
         `The Flag "${
           decision.flagKey
-        }" was Not Enabled for the user "${decision.userContext.getUserId()}"`
+        }" was Not Enabled for the user "${decision.userContext.getUserId()}"`,
       );
     }
   });
 
   let headers = new Headers();
   headers.set("Content-Type", "text/plain");
-  headers.set("Set-Cookie", cookie.serialize(OPTIMIZELY_USER_ID_COOKIE_NAME, userId));
+  headers.set(
+    "Set-Cookie",
+    cookie.serialize(OPTIMIZELY_USER_ID_COOKIE_NAME, userId),
+  );
   return new Response(
     "Welcome to the Optimizely Starter template. Check logs for decision results.",
     { headers },
