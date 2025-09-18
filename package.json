@@ -1,14 +1,13 @@
 {
   "private": true,
   "name": "optimizely-cloudflare-worker-template",
-  "version": "0.1.0",
+  "version": "2.0.0",
   "description": "A template for kick starting a Cloudflare Workers project with Optimizely",
   "main": "src/index.js",
   "scripts": {
     "format": "prettier --write '**/*.{js,css,json,md}'"
   },
-  "author": "Zeeshan Ashraf <zashraf@folio3.com>",
-  "license": "ISC",
+  "license": "Apache-2.0",
   "devDependencies": {
     "prettier": "^1.18.2"
   },
