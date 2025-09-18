@@ -13,7 +13,7 @@
     "prettier": "^1.18.2"
   },
   "dependencies": {
-    "@optimizely/optimizely-sdk": "^4.9.1",
+    "@optimizely/optimizely-sdk": "^6.1.0",
     "cookie": "^0.4.2",
     "uuid": "^8.3.2"
   }
