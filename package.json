@@ -1,19 +1,19 @@
 {
-  "private": true,
-  "type": "module",
   "name": "optimizely-cloudflare-worker-template",
-  "version": "2.0.0",
   "description": "A template for kick starting a Cloudflare Workers project with Optimizely",
+  "version": "2.0.0",
+  "license": "Apache-2.0",
+  "type": "module",
   "main": "src/index.js",
+  "private": true,
   "scripts": {
     "format": "prettier --write '**/*.{js,css,json,md}'"
-  },
-  "license": "Apache-2.0",
-  "devDependencies": {
-    "prettier": "^3.6.2"
   },
   "dependencies": {
     "@optimizely/optimizely-sdk": "^6.1.0",
     "cookie": "^1.0.2"
+  },
+  "devDependencies": {
+    "prettier": "^3.6.2"
   }
 }
