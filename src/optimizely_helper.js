@@ -40,7 +40,7 @@ export function dispatchEvent({ url, params }) {
 	return fetch(eventRequest);
 }
 
-export async function getOptimizelyClient(env, ctx) {
+export async function getOptimizelyClient(env) {
 	const now = Date.now();
 
 	// Get SDK key from environment variables

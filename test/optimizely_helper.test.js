@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
 let dispatchEvent;
 let getDatafile;
 let getOptimizelyClient;
