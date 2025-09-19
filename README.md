@@ -163,7 +163,7 @@ For more information about Cloudflare Workers, you may visit the following resou
 - [Cloudflare Workers](https://workers.cloudflare.com/)
 - [Cloudflare Workers documentation](https://developers.cloudflare.com/workers/)
 - [Cloudflare Workers tutorials](https://developers.cloudflare.com/workers/tutorials)
-- [Cloudflare Workers with Optimizely documentation](https://docs.developers.optimizely.com/feature-experimentation/docs/cloudflare-workerss)
+- [Cloudflare Workers with Optimizely documentation](https://docs.developers.optimizely.com/feature-experimentation/docs/cloudflare-workers)
 
 ## SDK Development
 
