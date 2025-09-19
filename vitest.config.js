@@ -6,12 +6,8 @@ export default defineConfig({
     environment: 'miniflare',
     environmentOptions: {
       modules: true,
-      globals: {
-        crypto: {
-          randomUUID: () => 'test-uuid-123'
-        }
-      }
     },
+    threads: false,
     setupFiles: ['./test/setup.js']
   }
 });

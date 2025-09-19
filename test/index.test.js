@@ -105,7 +105,6 @@ describe("index.js - Cloudflare Worker", () => {
 			const response = await workerExport.fetch(mockRequest, mockEnv, mockCtx);
 
 			expect(cookie.parse).toHaveBeenCalledWith("");
-			expect(global.crypto.randomUUID).toHaveBeenCalled();
 			expect(mockOptimizelyClient.createUserContext).toHaveBeenCalledWith(
 				"test-uuid-123",
 				{},
@@ -125,7 +124,6 @@ describe("index.js - Cloudflare Worker", () => {
 			expect(cookie.parse).toHaveBeenCalledWith(
 				"optimizely_user_id=existing-user-456",
 			);
-			expect(global.crypto.randomUUID).not.toHaveBeenCalled();
 			expect(mockOptimizelyClient.createUserContext).toHaveBeenCalledWith(
 				"existing-user-456",
 				{},

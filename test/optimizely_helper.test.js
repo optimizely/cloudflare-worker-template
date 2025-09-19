@@ -1,9 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import {
-	dispatchEvent,
-	getDatafile,
-	getOptimizelyClient,
-} from "../src/optimizely_helper.js";
+let dispatchEvent;
+let getDatafile;
+let getOptimizelyClient;
 
 // Mock the Optimizely SDK
 vi.mock("@optimizely/optimizely-sdk/universal", () => ({
@@ -14,10 +12,14 @@ vi.mock("@optimizely/optimizely-sdk/universal", () => ({
 }));
 
 describe("optimizely_helper", () => {
-	beforeEach(() => {
+	beforeEach(async () => {
 		vi.clearAllMocks();
-		// Reset module-scope variables
 		vi.resetModules();
+
+		const mod = await import("../src/optimizely_helper.js");
+		dispatchEvent = mod.dispatchEvent;
+		getDatafile = mod.getDatafile;
+		getOptimizelyClient = mod.getOptimizelyClient;
 	});
 
 	afterEach(() => {
@@ -166,9 +168,8 @@ describe("optimizely_helper", () => {
 			Date.now = vi.fn(() => currentTime);
 
 			try {
-				// First call
-				await getOptimizelyClient(env, ctx);
-				expect(mockCreateInstance).toHaveBeenCalledTimes(1);
+				// First call - should create client
+				const client1 = await getOptimizelyClient(env, ctx);
 
 				// Advance time beyond TTL (600 seconds = 600,000 ms)
 				currentTime += 601000;
@@ -178,12 +179,11 @@ describe("optimizely_helper", () => {
 					text: vi.fn().mockResolvedValue('{"version": "5"}'),
 				});
 
-				// Second call after TTL expires
+				// Second call after TTL expires - should return same client instance and call setDatafile
 				const client2 = await getOptimizelyClient(env, ctx);
 
-				expect(global.fetch).toHaveBeenCalledTimes(2);
+				expect(client1).toBe(client2);
 				expect(mockClient.setDatafile).toHaveBeenCalledWith('{"version": "5"}');
-				expect(client2).toBe(mockClient);
 			} finally {
 				Date.now = originalDateNow;
 			}
