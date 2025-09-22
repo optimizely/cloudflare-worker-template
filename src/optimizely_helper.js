@@ -50,7 +50,8 @@ export async function getOptimizelyClient(env, ctx) {
 		);
 	}
 
-	const isDatafileStale = now - lastDatafileUpdate > DATAFILE_CACHE_TTL_SECONDS * 1000;
+	const isDatafileStale =
+		now - lastDatafileUpdate > DATAFILE_CACHE_TTL_SECONDS * 1000;
 	if (optimizelyClient && !isDatafileStale) {
 		return optimizelyClient;
 	}
@@ -89,7 +90,6 @@ export async function getOptimizelyClient(env, ctx) {
 		clientEngine: CLOUDFLARE_CLIENT_ENGINE,
 		disposable: true, // Enable auto-disposal for edge environment
 	});
-
 
 	lastDatafileUpdate = now;
 	return optimizelyClient;

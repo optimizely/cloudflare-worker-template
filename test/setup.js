@@ -37,10 +37,6 @@ if (typeof global.Request === "undefined") {
 				}
 			}
 		}
-
-		
-		
-		
 	};
 }
 
