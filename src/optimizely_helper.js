@@ -14,36 +14,34 @@
  * limitations under the License.
  */
 
-import { createInstance, LogLevel } from "@optimizely/optimizely-sdk/universal";
+import {
+	createForwardingEventProcessor,
+	createInstance,
+	createStaticProjectConfigManager,
+} from "@optimizely/optimizely-sdk/universal";
+import { CloudflareRequestHandler } from "./request_handler";
 
 const CLOUDFLARE_CLIENT_ENGINE = "javascript-sdk/cloudflare";
+// https://developers.cloudflare.com/workers/examples/cache-using-fetch/
+const DATAFILE_CACHE_TTL_SECONDS = 5 * 60; // 5 minutes
 
 // Module-scope variables for client caching
 let optimizelyClient = null;
 let lastDatafileUpdate = 0;
-const DATAFILE_CACHE_TTL = 600 * 1000; // 10 minutes in ms
 
-export async function getDatafile(sdkKey, ttl) {
-	const datafileResponse = await fetch(
-		`https://cdn.optimizely.com/datafiles/${sdkKey}.json`,
-		{ cf: { cacheTtl: ttl } },
-	);
-	return await datafileResponse.text();
-}
+const requestHandler = new CloudflareRequestHandler();
 
-export function dispatchEvent({ url, params }) {
-	const eventRequest = new Request(url, {
-		method: "POST",
-		body: JSON.stringify(params),
-	});
-
-	return fetch(eventRequest);
+export async function getDatafile(sdkKey) {
+	// Use the CloudflareRequestHandler so requests can be aborted/managed in tests
+	const url = `https://cdn.optimizely.com/datafiles/${sdkKey}.json`;
+	const { responsePromise } = requestHandler.makeRequest(url, {}, "GET");
+	const response = await responsePromise;
+	return response.body;
 }
 
 export async function getOptimizelyClient(env, _ctx) {
 	const now = Date.now();
 
-	// Get SDK key from environment variables
 	const sdkKey = env.OPTIMIZELY_SDK_KEY;
 	if (!sdkKey) {
 		throw new Error(
@@ -52,39 +50,42 @@ export async function getOptimizelyClient(env, _ctx) {
 		);
 	}
 
-	// Initialize client or refresh datafile if cache expired
-	if (!optimizelyClient || now - lastDatafileUpdate > DATAFILE_CACHE_TTL) {
-		const datafile = await getDatafile(sdkKey, 600);
-
-		if (!optimizelyClient) {
-			// Create client for the first time
-			optimizelyClient = createInstance({
-				datafile,
-				logLevel: LogLevel.Error,
-				clientEngine: CLOUDFLARE_CLIENT_ENGINE,
-
-				/***
-				 * Optional event dispatcher. Please uncomment the following lines if you want to dispatch an impression event to optimizely logx backend.
-				 * When enabled, an event is dispatched asynchronously. It does not impact the response time for a particular worker but it will
-				 * add to the total compute time of the worker and can impact cloudflare billing.
-				 */
-
-				/* eventDispatcher: {
-					dispatchEvent: optimizelyEvent => {
-						// Tell cloudflare to wait for this promise to fulfill.
-						ctx.waitUntil(dispatchEvent(optimizelyEvent));
-					}
-				}, */
-
-				/* Add other Optimizely SDK initialization options here if needed */
-			});
-		} else {
-			// Update existing client with new datafile
-			optimizelyClient.setDatafile(datafile);
-		}
-
-		lastDatafileUpdate = now;
+	const isDatafileStale = now - lastDatafileUpdate > DATAFILE_CACHE_TTL_SECONDS;
+	if (optimizelyClient && !isDatafileStale) {
+		return optimizelyClient;
 	}
+
+	const datafile = await getDatafile(sdkKey, 600);
+	const projectConfigManager = createStaticProjectConfigManager({
+		datafile,
+	});
+
+	const eventDispatcher = {
+		dispatchEvent: (event) => {
+			const url = "https://logx.optimizely.com/v1/events";
+			const { responsePromise } = requestHandler.makeRequest(
+				url,
+				{},
+				"POST",
+				event,
+			);
+			return responsePromise;
+		},
+	};
+	const eventProcessor = createForwardingEventProcessor({
+		eventDispatcher,
+	});
+
+	// https://docs.developers.optimizely.com/feature-experimentation/docs/initialize-the-javascript-sdk
+	optimizelyClient = createInstance({
+		projectConfigManager,
+		eventProcessor,
+		requestHandler,
+		clientEngine: CLOUDFLARE_CLIENT_ENGINE,
+		disposable: true, // Enable auto-disposal for edge environment
+	});
+
+	lastDatafileUpdate = now;
 
 	return optimizelyClient;
 }
