@@ -90,7 +90,7 @@ export async function getOptimizelyClient(env, ctx) {
 		disposable: true, // Enable auto-disposal for edge environment
 	});
 
-	lastDatafileUpdate = now;
 
+	lastDatafileUpdate = now;
 	return optimizelyClient;
 }
