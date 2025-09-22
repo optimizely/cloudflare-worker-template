@@ -29,7 +29,7 @@ const DATAFILE_CACHE_TTL_SECONDS = 5 * 60; // 5 minutes
 let optimizelyClient = null;
 let lastDatafileUpdate = 0;
 
-const requestHandler = new CloudflareRequestHandler();
+let requestHandler = new CloudflareRequestHandler();
 
 export async function getDatafile(sdkKey) {
 	// Use the CloudflareRequestHandler so requests can be aborted/managed in tests
@@ -39,7 +39,7 @@ export async function getDatafile(sdkKey) {
 	return response.body;
 }
 
-export async function getOptimizelyClient(env, _ctx) {
+export async function getOptimizelyClient(env, ctx) {
 	const now = Date.now();
 
 	const sdkKey = env.OPTIMIZELY_SDK_KEY;
@@ -53,6 +53,11 @@ export async function getOptimizelyClient(env, _ctx) {
 	const isDatafileStale = now - lastDatafileUpdate > DATAFILE_CACHE_TTL_SECONDS;
 	if (optimizelyClient && !isDatafileStale) {
 		return optimizelyClient;
+	}
+
+	// Update the global request handler with the current context
+	if (ctx) {
+		requestHandler = new CloudflareRequestHandler(ctx);
 	}
 
 	const datafile = await getDatafile(sdkKey);

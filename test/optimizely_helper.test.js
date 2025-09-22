@@ -1,9 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-let getDatafile;
-let getOptimizelyClient;
-
-// Mock the Optimizely SDK
 vi.mock("@optimizely/optimizely-sdk/universal", () => ({
 	createInstance: vi.fn(),
 	createStaticProjectConfigManager: vi.fn(),
@@ -12,6 +8,9 @@ vi.mock("@optimizely/optimizely-sdk/universal", () => ({
 		Error: "ERROR",
 	},
 }));
+
+let getDatafile;
+let getOptimizelyClient;
 
 describe("Optimizely Helper", () => {
 	beforeEach(async () => {
