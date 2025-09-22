@@ -22,6 +22,14 @@
  */
 export class CloudflareRequestHandler {
 	/**
+	 * Create a new CloudflareRequestHandler instance.
+	 * @param {Object} ctx - Optional Cloudflare Worker execution context with waitUntil method
+	 */
+	constructor(ctx = null) {
+		this.ctx = ctx;
+	}
+
+	/**
 	 * Make a fetch request inside Cloudflare Workers.
 	 * @param {string} url - The request URL
 	 * @param {Record<string,string>} headers - Plain object of headers
@@ -33,6 +41,9 @@ export class CloudflareRequestHandler {
 		if (typeof url !== "string") {
 			throw new TypeError("url must be a string");
 		}
+
+		// Use the instance context if available
+		const executionContext = this.ctx;
 
 		const controller = new AbortController();
 		method = (method || "GET").toUpperCase();
@@ -103,6 +114,10 @@ export class CloudflareRequestHandler {
 				}
 				throw error;
 			});
+
+		if (executionContext && typeof executionContext.waitUntil === "function") {
+			executionContext.waitUntil(responsePromise);
+		}
 
 		return {
 			responsePromise,
