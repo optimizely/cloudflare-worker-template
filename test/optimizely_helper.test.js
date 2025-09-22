@@ -1,24 +1,24 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-let dispatchEvent;
 let getDatafile;
 let getOptimizelyClient;
 
 // Mock the Optimizely SDK
 vi.mock("@optimizely/optimizely-sdk/universal", () => ({
 	createInstance: vi.fn(),
+	createStaticProjectConfigManager: vi.fn(),
+	createForwardingEventProcessor: vi.fn(),
 	LogLevel: {
 		Error: "ERROR",
 	},
 }));
 
-describe("optimizely_helper", () => {
+describe("Optimizely Helper", () => {
 	beforeEach(async () => {
 		vi.clearAllMocks();
 		vi.resetModules();
 
 		const mod = await import("../src/optimizely_helper.js");
-		dispatchEvent = mod.dispatchEvent;
 		getDatafile = mod.getDatafile;
 		getOptimizelyClient = mod.getOptimizelyClient;
 	});
@@ -32,7 +32,7 @@ describe("optimizely_helper", () => {
 			const mockResponse = {
 				text: vi.fn().mockResolvedValue('{"version": "4", "experiments": []}'),
 			};
-			global.fetch.mockResolvedValue(mockResponse);
+			global.fetch = vi.fn().mockResolvedValue(mockResponse);
 
 			const sdkKey = "test-sdk-key";
 			const ttl = 600;
@@ -41,14 +41,17 @@ describe("optimizely_helper", () => {
 
 			expect(global.fetch).toHaveBeenCalledWith(
 				`https://cdn.optimizely.com/datafiles/${sdkKey}.json`,
-				{ cf: { cacheTtl: ttl } },
+				expect.objectContaining({
+					method: "GET",
+					headers: expect.any(Headers),
+					signal: expect.any(AbortSignal),
+				}),
 			);
-			expect(mockResponse.text).toHaveBeenCalled();
 			expect(result).toBe('{"version": "4", "experiments": []}');
 		});
 
 		it("should handle fetch errors", async () => {
-			global.fetch.mockRejectedValue(new Error("Network error"));
+			global.fetch = vi.fn().mockRejectedValue(new Error("Network error"));
 
 			const sdkKey = "test-sdk-key";
 			const ttl = 600;
@@ -57,61 +60,46 @@ describe("optimizely_helper", () => {
 		});
 	});
 
-	describe("dispatchEvent", () => {
-		it("should create and send POST request with correct parameters", async () => {
-			const mockResponse = { ok: true };
-			global.fetch.mockResolvedValue(mockResponse);
-
-			const eventData = {
-				url: "https://logx.optimizely.com/v1/events",
-				params: {
-					project_id: "12345",
-					account_id: "67890",
-					client_name: "javascript-sdk",
-					visitors: [],
-				},
-			};
-
-			const result = await dispatchEvent(eventData);
-
-			expect(global.fetch).toHaveBeenCalledWith(expect.any(Request));
-
-			const calledRequest = global.fetch.mock.calls[0][0];
-			expect(calledRequest.url).toBe(eventData.url);
-			expect(calledRequest.method).toBe("POST");
-			expect(result).toBe(mockResponse);
-		});
-
-		it("should handle dispatch errors", async () => {
-			global.fetch.mockRejectedValue(new Error("Dispatch failed"));
-
-			const eventData = {
-				url: "https://logx.optimizely.com/v1/events",
-				params: { test: "data" },
-			};
-
-			await expect(dispatchEvent(eventData)).rejects.toThrow("Dispatch failed");
-		});
-	});
-
 	describe("getOptimizelyClient", () => {
 		let mockCreateInstance;
+		let mockCreateStaticProjectConfigManager;
+		let mockCreateForwardingEventProcessor;
 		let mockClient;
+		let mockProjectConfigManager;
+		let mockEventProcessor;
 
 		beforeEach(async () => {
-			const { createInstance } = await import(
-				"@optimizely/optimizely-sdk/universal"
-			);
+			const {
+				createInstance,
+				createStaticProjectConfigManager,
+				createForwardingEventProcessor,
+			} = await import("@optimizely/optimizely-sdk/universal");
+
 			mockCreateInstance = createInstance;
+			mockCreateStaticProjectConfigManager = createStaticProjectConfigManager;
+			mockCreateForwardingEventProcessor = createForwardingEventProcessor;
 
 			mockClient = {
 				setDatafile: vi.fn(),
 			};
-			mockCreateInstance.mockReturnValue(mockClient);
+			mockProjectConfigManager = {};
+			mockEventProcessor = {};
 
-			// Mock getDatafile
-			global.fetch.mockResolvedValue({
-				text: vi.fn().mockResolvedValue('{"version": "4"}'),
+			mockCreateInstance.mockReturnValue(mockClient);
+			mockCreateStaticProjectConfigManager.mockReturnValue(
+				mockProjectConfigManager,
+			);
+			mockCreateForwardingEventProcessor.mockReturnValue(mockEventProcessor);
+
+			// Mock getDatafile by mocking the CloudflareRequestHandler response
+			global.fetch = vi.fn().mockResolvedValue({
+				status: 200,
+				ok: true,
+				headers: {
+					get: () => "application/json",
+					entries: () => [["content-type", "application/json"]],
+				},
+				json: vi.fn().mockResolvedValue('{"version": "4"}'),
 			});
 		});
 
@@ -132,12 +120,24 @@ describe("optimizely_helper", () => {
 
 			expect(global.fetch).toHaveBeenCalledWith(
 				"https://cdn.optimizely.com/datafiles/test-key.json",
-				{ cf: { cacheTtl: 600 } },
+				expect.objectContaining({
+					method: "GET",
+					headers: expect.any(Headers),
+					signal: expect.any(AbortSignal),
+				}),
 			);
-			expect(mockCreateInstance).toHaveBeenCalledWith({
+			expect(mockCreateStaticProjectConfigManager).toHaveBeenCalledWith({
 				datafile: '{"version": "4"}',
-				logLevel: "ERROR",
+			});
+			expect(mockCreateForwardingEventProcessor).toHaveBeenCalledWith({
+				eventDispatcher: expect.any(Object),
+			});
+			expect(mockCreateInstance).toHaveBeenCalledWith({
+				projectConfigManager: mockProjectConfigManager,
+				eventProcessor: mockEventProcessor,
+				requestHandler: expect.any(Object),
 				clientEngine: "javascript-sdk/cloudflare",
+				disposable: true,
 			});
 			expect(client).toBe(mockClient);
 		});
@@ -170,21 +170,28 @@ describe("optimizely_helper", () => {
 
 			try {
 				// First call - should create client
-				const client1 = await getOptimizelyClient(env, ctx);
+				await getOptimizelyClient(env, ctx);
 
-				// Advance time beyond TTL (600 seconds = 600,000 ms)
-				currentTime += 601000;
+				// Advance time beyond TTL (300 seconds = 300,000 ms)
+				currentTime += 301000;
 
 				// Mock new datafile response
-				global.fetch.mockResolvedValue({
-					text: vi.fn().mockResolvedValue('{"version": "5"}'),
+				global.fetch = vi.fn().mockResolvedValue({
+					status: 200,
+					ok: true,
+					headers: {
+						get: () => "application/json",
+						entries: () => [["content-type", "application/json"]],
+					},
+					json: vi.fn().mockResolvedValue('{"version": "5"}'),
 				});
 
-				// Second call after TTL expires - should return same client instance and call setDatafile
+				// Second call after TTL expires - should create new client
 				const client2 = await getOptimizelyClient(env, ctx);
 
-				expect(client1).toBe(client2);
-				expect(mockClient.setDatafile).toHaveBeenCalledWith('{"version": "5"}');
+				expect(client2).toBe(mockClient);
+				expect(mockCreateStaticProjectConfigManager).toHaveBeenCalledTimes(2);
+				expect(mockCreateInstance).toHaveBeenCalledTimes(2);
 			} finally {
 				Date.now = originalDateNow;
 			}

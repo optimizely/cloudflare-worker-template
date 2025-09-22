@@ -55,7 +55,7 @@ export async function getOptimizelyClient(env, _ctx) {
 		return optimizelyClient;
 	}
 
-	const datafile = await getDatafile(sdkKey, 600);
+	const datafile = await getDatafile(sdkKey);
 	const projectConfigManager = createStaticProjectConfigManager({
 		datafile,
 	});

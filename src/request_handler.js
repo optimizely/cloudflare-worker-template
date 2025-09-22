@@ -52,8 +52,8 @@ export class CloudflareRequestHandler {
 			if (typeof data === "object") {
 				try {
 					requestOptions.body = JSON.stringify(data);
-					if (!requestHeaders.has("Content-Type")) {
-						requestHeaders.set("Content-Type", "application/json");
+					if (!headers.has("Content-Type")) {
+						headers.set("Content-Type", "application/json");
 					}
 				} catch {
 					throw new TypeError("Failed to stringify request body");
