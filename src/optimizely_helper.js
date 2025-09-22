@@ -50,7 +50,7 @@ export async function getOptimizelyClient(env, ctx) {
 		);
 	}
 
-	const isDatafileStale = now - lastDatafileUpdate > DATAFILE_CACHE_TTL_SECONDS;
+	const isDatafileStale = now - lastDatafileUpdate > DATAFILE_CACHE_TTL_SECONDS * 1000;
 	if (optimizelyClient && !isDatafileStale) {
 		return optimizelyClient;
 	}
