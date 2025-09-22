@@ -38,9 +38,9 @@ if (typeof global.Request === "undefined") {
 			}
 		}
 
-		get(name) {
-			return this.headers.get(name.toLowerCase()) || "";
-		}
+		
+		
+		
 	};
 }
 
