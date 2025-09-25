@@ -9,9 +9,10 @@
 	"scripts": {
 		"format": "biome format --write ./src ./test",
 		"lint": "biome check --write ./src ./test",
+		"test": "vitest run",
+		"precommit": "npm run lint && npm run format && npm run test",
 		"dev": "miniflare src/index.js --wrangler --env development",
 		"start": "miniflare src/index.js --wrangler",
-		"test": "vitest run",
 		"build": "npx wrangler deploy --dry-run --outdir dist"
 	},
 	"dependencies": {
