@@ -38,17 +38,8 @@ export class CloudflareRequestHandler {
 	 * @returns {{responsePromise: Promise<{status:number,ok:boolean,body:any,headers:Object}>, abort: ()=>void}}
 	 */
 	makeRequest(url, headers = {}, method = "GET", data) {
-		if (typeof url !== "string") {
-			throw new TypeError("url must be a string");
-		}
-
-		// Use the instance context if available
-		const executionContext = this.ctx;
-
 		const controller = new AbortController();
 		method = (method || "GET").toUpperCase();
-
-		// Treat the second parameter as plain headers (keep behavior simple and predictable)
 		headers = new Headers(headers || {});
 
 		const requestOptions = {
@@ -57,9 +48,7 @@ export class CloudflareRequestHandler {
 			signal: controller.signal,
 		};
 
-		// Attach body for methods that typically allow one
-		const allowBodyMethods = ["POST", "PUT", "PATCH", "DELETE"];
-		if (data !== undefined && allowBodyMethods.includes(method)) {
+		if (data !== undefined) {
 			if (typeof data === "object") {
 				try {
 					requestOptions.body = JSON.stringify(data);
@@ -77,11 +66,10 @@ export class CloudflareRequestHandler {
 
 		const responsePromise = fetch(url, requestOptions)
 			.then(async (response) => {
-				// Parse response based on content-type when possible
-				const ct = response?.headers?.get?.("content-type") || "";
+				const contentType = response.headers.get("content-type") || "";
 				let body;
 				try {
-					if (ct.includes("application/json")) {
+					if (contentType.includes("application/json")) {
 						body = await response.json();
 					} else {
 						body = await response.text();
@@ -96,11 +84,11 @@ export class CloudflareRequestHandler {
 				}
 
 				return {
-					status: response?.status,
-					ok: response?.ok,
+					status: response.status,
+					ok: response.ok,
 					body,
 					headers:
-						response?.headers && typeof response.headers.entries === "function"
+						response.headers && typeof response.headers.entries === "function"
 							? Object.fromEntries(response.headers.entries())
 							: {},
 				};
@@ -115,8 +103,8 @@ export class CloudflareRequestHandler {
 				throw error;
 			});
 
-		if (executionContext && typeof executionContext.waitUntil === "function") {
-			executionContext.waitUntil(responsePromise);
+		if (this.ctx && typeof this.ctx.waitUntil === "function") {
+			this.ctx.waitUntil(responsePromise);
 		}
 
 		return {
