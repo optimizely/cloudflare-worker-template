@@ -15,6 +15,7 @@
  */
 
 import {
+	createEventDispatcher,
 	createForwardingEventProcessor,
 	createInstance,
 	createStaticProjectConfigManager,
@@ -23,13 +24,13 @@ import { CloudflareRequestHandler } from "./request_handler";
 
 const CLOUDFLARE_CLIENT_ENGINE = "javascript-sdk/cloudflare";
 // https://developers.cloudflare.com/workers/examples/cache-using-fetch/
-const DATAFILE_CACHE_TTL_SECONDS = 5 * 60; // 5 minutes
+const DATAFILE_CACHE_TTL_SECONDS = 1 * 60; // 1 minute
 
 // Module-scope variables for client caching
 let optimizelyClient = null;
 let lastDatafileUpdate = 0;
 
-let requestHandler = new CloudflareRequestHandler();
+const requestHandler = new CloudflareRequestHandler();
 
 export async function getDatafile(sdkKey) {
 	// Use the CloudflareRequestHandler so requests can be aborted/managed in tests
@@ -56,28 +57,14 @@ export async function getOptimizelyClient(env, ctx) {
 		return optimizelyClient;
 	}
 
-	// Update the global request handler with the current context
-	if (ctx) {
-		requestHandler = new CloudflareRequestHandler(ctx);
-	}
-
 	const datafile = await getDatafile(sdkKey);
 	const projectConfigManager = createStaticProjectConfigManager({
 		datafile,
 	});
 
-	const eventDispatcher = {
-		dispatchEvent: (event) => {
-			const url = "https://logx.optimizely.com/v1/events";
-			const { responsePromise } = requestHandler.makeRequest(
-				url,
-				{},
-				"POST",
-				event,
-			);
-			return responsePromise;
-		},
-	};
+	const eventDispatcher = createEventDispatcher(
+		new CloudflareRequestHandler(ctx),
+	);
 	const eventProcessor = createForwardingEventProcessor({
 		eventDispatcher,
 	});

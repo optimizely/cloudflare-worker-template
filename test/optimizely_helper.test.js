@@ -4,6 +4,7 @@ vi.mock("@optimizely/optimizely-sdk/universal", () => ({
 	createInstance: vi.fn(),
 	createStaticProjectConfigManager: vi.fn(),
 	createForwardingEventProcessor: vi.fn(),
+	createEventDispatcher: vi.fn(() => ({})),
 	LogLevel: {
 		Error: "ERROR",
 	},
@@ -29,7 +30,13 @@ describe("Optimizely Helper", () => {
 	describe("getDatafile", () => {
 		it("should fetch datafile from Optimizely CDN with correct URL and TTL", async () => {
 			const mockResponse = {
-				text: vi.fn().mockResolvedValue('{"version": "4", "experiments": []}'),
+				status: 200,
+				ok: true,
+				headers: {
+					get: () => "application/json",
+					entries: () => [["content-type", "application/json"]],
+				},
+				json: vi.fn().mockResolvedValue('{"version": "4", "experiments": []}'),
 			};
 			global.fetch = vi.fn().mockResolvedValue(mockResponse);
 
