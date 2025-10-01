@@ -59,15 +59,21 @@ export async function getOptimizelyClient(env, ctx) {
 			lastDatafileUpdate = now;
 		} catch (error) {
 			// If fetch fails and we have a cached datafile, continue with stale data
-			// Otherwise, rethrow the error
-			if (!cachedDatafile) {
-				throw error;
+			if (cachedDatafile) {
+				console.error(
+					"Failed to fetch fresh datafile, using cached version:",
+					error,
+				);
+			} else {
+				// No cached datafile available - this is a critical error
+				console.error(
+					"Failed to fetch datafile and no cached version available:",
+					error,
+				);
+				throw new Error(
+					`Unable to initialize Optimizely: Failed to fetch datafile for SDK key ${sdkKey}. ${error.message}`,
+				);
 			}
-			// Log the error but continue with stale datafile
-			console.error(
-				"Failed to fetch fresh datafile, using cached version:",
-				error,
-			);
 		}
 	}
 
