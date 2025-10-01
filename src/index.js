@@ -17,15 +17,45 @@
 import cookie from "cookie";
 import { getOptimizelyClient } from "./optimizely_helper";
 
+/**
+ * Cookie name used to store the Optimizely user ID for consistent user experience
+ * across requests from the same browser session.
+ * @type {string}
+ */
 const OPTIMIZELY_USER_ID_COOKIE_NAME = "optimizely_user_id";
 
-// Cloudflare Worker entry point
+/**
+ * Cloudflare Worker export interface.
+ * Handles incoming HTTP requests using the fetch handler pattern.
+ * @see https://developers.cloudflare.com/workers/runtime-apis/handlers/fetch/
+ */
 export default {
+	/**
+	 * Main fetch handler for the Cloudflare Worker.
+	 * @param {Request} request - The incoming HTTP request
+	 * @param {Object} env - Environment bindings (secrets, KV namespaces, etc.)
+	 * @param {ExecutionContext} ctx - Execution context for managing async operations
+	 * @returns {Promise<Response>} HTTP response
+	 */
 	async fetch(request, env, ctx) {
 		return handleRequest(request, env, ctx);
 	},
 };
 
+/**
+ * Handle incoming HTTP requests and perform Optimizely feature flag decisions.
+ *
+ * This function demonstrates:
+ * - Retrieving or generating a user ID from cookies
+ * - Creating an Optimizely user context
+ * - Making single and batch flag decisions
+ * - Setting cookies for user persistence
+ *
+ * @param {Request} request - The incoming HTTP request
+ * @param {Object} env - Environment bindings containing OPTIMIZELY_SDK_KEY and optional configuration
+ * @param {ExecutionContext} ctx - Cloudflare Worker execution context for managing async operations
+ * @returns {Promise<Response>} HTTP response with decision results
+ */
 async function handleRequest(request, env, ctx) {
 	const cookies = cookie.parse(request.headers.get("Cookie") || "");
 
