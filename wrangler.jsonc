@@ -8,6 +8,9 @@
 	"upload_source_maps": true,
 	"account_id": "YOUR_ACCOUNT_ID",
 	"vars": {
-		"OPTIMIZELY_SDK_KEY": "YOUR_SDK_KEY"
+		// Replace with your Optimizely SDK Key or use Cloudflare Environment Variables
+		"OPTIMIZELY_SDK_KEY": "YOUR_SDK_KEY",
+		// Optional: Set the datafile cache TTL in seconds (default is 300 seconds = 5 minutes)
+		"OPTIMIZELY_DATAFILE_CACHE_TTL_SECONDS": "600" // 10 minutes
 	}
 }

@@ -23,12 +23,42 @@ import {
 import { CloudflareRequestHandler } from "./request_handler";
 
 const CLOUDFLARE_CLIENT_ENGINE = "javascript-sdk/cloudflare";
-// https://developers.cloudflare.com/workers/examples/cache-using-fetch/
-const DATAFILE_CACHE_TTL_SECONDS = 1 * 60; // 1 minute
+
+// Default datafile cache TTL in seconds. Can be overridden via environment variable
+// OPTIMIZELY_DATAFILE_CACHE_TTL_SECONDS (e.g., "300" for 5 minutes, v0 was "600" for 10 minutes)
+const DEFAULT_DATAFILE_CACHE_TTL_SECONDS = 300; // 5 minutes
 
 // Module-scope variables for datafile caching
 let cachedDatafile = null;
 let lastDatafileUpdate = 0;
+
+/**
+ * Get the datafile cache TTL in seconds from environment variables.
+ *
+ * Reads OPTIMIZELY_DATAFILE_CACHE_TTL_SECONDS and returns it as an integer.
+ * Falls back to DEFAULT_DATAFILE_CACHE_TTL_SECONDS if not set or invalid.
+ *
+ * @param {Object} env - Environment variables object
+ * @returns {number} TTL in seconds
+ */
+function getDatafileCacheTTL(env) {
+	const envValue = env?.OPTIMIZELY_DATAFILE_CACHE_TTL_SECONDS;
+
+	if (envValue === undefined || envValue === null) {
+		return DEFAULT_DATAFILE_CACHE_TTL_SECONDS;
+	}
+
+	const parsedValue = Number.parseInt(envValue, 10);
+	if (Number.isNaN(parsedValue) || parsedValue < 0) {
+		console.warn(
+			`Invalid OPTIMIZELY_DATAFILE_CACHE_TTL_SECONDS value: "${envValue}". ` +
+				`Using default: ${DEFAULT_DATAFILE_CACHE_TTL_SECONDS} seconds.`,
+		);
+		return DEFAULT_DATAFILE_CACHE_TTL_SECONDS;
+	}
+
+	return parsedValue;
+}
 
 export async function getDatafile(sdkKey) {
 	// Datafile fetching doesn't need context since it's not dispatching events
@@ -50,9 +80,11 @@ export async function getOptimizelyClient(env, ctx) {
 		);
 	}
 
+	// Get cache TTL from environment (defaults to 5 minutes)
+	const cacheTTLSeconds = getDatafileCacheTTL(env);
+
 	// Check if we need to refresh the cached datafile
-	const isDatafileStale =
-		now - lastDatafileUpdate > DATAFILE_CACHE_TTL_SECONDS * 1000;
+	const isDatafileStale = now - lastDatafileUpdate > cacheTTLSeconds * 1000;
 	if (!cachedDatafile || isDatafileStale) {
 		try {
 			cachedDatafile = await getDatafile(sdkKey);
