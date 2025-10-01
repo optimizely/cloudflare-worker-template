@@ -65,7 +65,8 @@ Refer to the [Optimizely Cloudflare Workers Starter Kit documentation](https://d
    ```jsonc
    {
      "vars": {
-       "OPTIMIZELY_SDK_KEY": "YOUR_SDK_KEY"
+       "OPTIMIZELY_SDK_KEY": "YOUR_SDK_KEY",
+       "OPTIMIZELY_DATAFILE_CACHE_TTL_SECONDS": "300"  // Optional: cache TTL in seconds (default: 300)
      }
    }
    ```
@@ -74,6 +75,7 @@ Refer to the [Optimizely Cloudflare Workers Starter Kit documentation](https://d
 
    ```
    OPTIMIZELY_SDK_KEY=your_sdk_key
+   OPTIMIZELY_DATAFILE_CACHE_TTL_SECONDS=300  # Optional: cache TTL in seconds (default: 300)
    ```
 
    > **Note**: Your SDK keys can be found in the Optimizely application under **Settings > Environments**.
@@ -84,13 +86,20 @@ Refer to the [Optimizely Cloudflare Workers Starter Kit documentation](https://d
 
 ```
 ├── src/
-│   ├── index.js              # Main worker entry point
-│   └── optimizely_helper.js  # Optimizely SDK integration utilities
-├── wrangler.jsonc            # Cloudflare Workers configuration
-├── package.json              # Node.js dependencies and scripts
-├── .env.example             # Environment variable template
-├── .biome.jsonc             # Biome configuration for linting/formatting
-└── README.md                # This file
+│   ├── index.js                    # Main worker entry point
+│   ├── optimizely_helper.js        # Optimizely SDK integration utilities
+│   └── request_handler.js          # Cloudflare-specific HTTP request handler
+├── test/
+│   ├── index.test.js               # Tests for main worker
+│   ├── optimizely_helper.test.js   # Tests for Optimizely helper functions
+│   ├── request_handler.test.js     # Tests for request handler
+│   ├── setup.js                    # Test environment setup
+│   └── test-utils.js               # Shared test utilities and mocks
+├── .env.example                    # Environment variable template
+├── biome.jsonc                     # Biome configuration for linting/formatting
+├── package.json                    # Node.js dependencies and scripts
+├── vitest.config.js                # Vitest testing framework configuration
+└── wrangler.jsonc                  # Cloudflare Workers configuration
 ```
 
 ## Use the Cloudflare Workers Starter Kit
@@ -152,7 +161,13 @@ Additional platform-specific code is included in `src/optimizely_helper.js` whic
 
 ### Caching with Cloudflare
 
-This template uses Cloudflare's cache API to provide performant caching for the [Optimizely Datafile](https://docs.developers.optimizely.com/feature-experimentation/docs/manage-config-datafile). The datafile is automatically fetched from Optimizely's CDN and cached for 10 minutes, with Cloudflare edge caching providing additional performance benefits.
+This template uses Cloudflare's cache API to provide performant caching for the [Optimizely Datafile](https://docs.developers.optimizely.com/feature-experimentation/docs/manage-config-datafile). The datafile is automatically fetched from Optimizely's CDN and cached for 5 minutes by default (configurable via the `OPTIMIZELY_DATAFILE_CACHE_TTL_SECONDS` environment variable), with Cloudflare edge caching providing additional performance benefits.
+
+**Cache Configuration:**
+- **Default TTL**: 5 minutes (300 seconds)
+- **Configurable via**: `OPTIMIZELY_DATAFILE_CACHE_TTL_SECONDS` environment variable
+- **Example values**: `300` (5 minutes), `600` (10 minutes), `1800` (30 minutes)
+- **Behavior**: If the datafile fetch fails, the cached datafile will continue to be used (stale-while-revalidate pattern)
 
 ### Identity Management
 
