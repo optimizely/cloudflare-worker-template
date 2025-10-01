@@ -26,14 +26,13 @@ const CLOUDFLARE_CLIENT_ENGINE = "javascript-sdk/cloudflare";
 // https://developers.cloudflare.com/workers/examples/cache-using-fetch/
 const DATAFILE_CACHE_TTL_SECONDS = 1 * 60; // 1 minute
 
-// Module-scope variables for client caching
-let optimizelyClient = null;
+// Module-scope variables for datafile caching
+let cachedDatafile = null;
 let lastDatafileUpdate = 0;
 
-const requestHandler = new CloudflareRequestHandler();
-
 export async function getDatafile(sdkKey) {
-	// Use the CloudflareRequestHandler so requests can be aborted/managed in tests
+	// Datafile fetching doesn't need context since it's not dispatching events
+	const requestHandler = new CloudflareRequestHandler();
 	const url = `https://cdn.optimizely.com/datafiles/${sdkKey}.json`;
 	const { responsePromise } = requestHandler.makeRequest(url, {}, "GET");
 	const response = await responsePromise;
@@ -51,33 +50,48 @@ export async function getOptimizelyClient(env, ctx) {
 		);
 	}
 
+	// Check if we need to refresh the cached datafile
 	const isDatafileStale =
 		now - lastDatafileUpdate > DATAFILE_CACHE_TTL_SECONDS * 1000;
-	if (optimizelyClient && !isDatafileStale) {
-		return optimizelyClient;
+	if (!cachedDatafile || isDatafileStale) {
+		try {
+			cachedDatafile = await getDatafile(sdkKey);
+			lastDatafileUpdate = now;
+		} catch (error) {
+			// If fetch fails and we have a cached datafile, continue with stale data
+			// Otherwise, rethrow the error
+			if (!cachedDatafile) {
+				throw error;
+			}
+			// Log the error but continue with stale datafile
+			console.error(
+				"Failed to fetch fresh datafile, using cached version:",
+				error,
+			);
+		}
 	}
 
-	const datafile = await getDatafile(sdkKey);
+	// Create a new client instance for each request with the request-specific context
+	// Use the same request handler instance for both event dispatching and any SDK requests
+	const contextualRequestHandler = new CloudflareRequestHandler(ctx);
+
 	const projectConfigManager = createStaticProjectConfigManager({
-		datafile,
+		datafile: cachedDatafile,
 	});
 
-	const eventDispatcher = createEventDispatcher(
-		new CloudflareRequestHandler(ctx),
-	);
+	const eventDispatcher = createEventDispatcher(contextualRequestHandler);
 	const eventProcessor = createForwardingEventProcessor({
 		eventDispatcher,
 	});
 
 	// https://docs.developers.optimizely.com/feature-experimentation/docs/initialize-the-javascript-sdk
-	optimizelyClient = createInstance({
+	const optimizelyClient = createInstance({
 		projectConfigManager,
 		eventProcessor,
-		requestHandler,
+		requestHandler: contextualRequestHandler,
 		clientEngine: CLOUDFLARE_CLIENT_ENGINE,
 		disposable: true, // Enable auto-disposal for edge environment
 	});
 
-	lastDatafileUpdate = now;
 	return optimizelyClient;
 }
