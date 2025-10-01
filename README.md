@@ -37,27 +37,31 @@ Refer to the [Optimizely Cloudflare Workers Starter Kit documentation](https://d
 2. Add `account_id` in `wrangler.jsonc`. If you do not know the account ID, run `wrangler dev` and the CLI will prompt you with the account ID and the instructions to add it.
 
 3. Install node packages.
+
    ```
    npm install
    ```
 
 4. **Configure your Optimizely SDK Key**:
-   
+
    Copy the example environment file:
+
    ```
    cp .env.example .env
    ```
-   
+
    Then set your SDK key using one of these methods:
-   
+
    **Option A: Using Wrangler Secrets (Recommended for production)**
+
    ```
    wrangler secret put OPTIMIZELY_SDK_KEY
    ```
-   
+
    **Option B: Using wrangler.jsonc for development**
-   
+
    Edit `wrangler.jsonc` and replace `YOUR_SDK_KEY` with your actual SDK key:
+
    ```jsonc
    {
      "vars": {
@@ -65,12 +69,13 @@ Refer to the [Optimizely Cloudflare Workers Starter Kit documentation](https://d
      }
    }
    ```
-   
+
    **Option C: Using .env file for local development**
+
    ```
    OPTIMIZELY_SDK_KEY=your_sdk_key
    ```
-   
+
    > **Note**: Your SDK keys can be found in the Optimizely application under **Settings > Environments**.
 
 5. **Set up your account ID** (if deploying): Add `account_id` in `wrangler.jsonc`. If you don't know the account ID, run `wrangler whoami` or `wrangler dev` and the CLI will prompt you with instructions.
@@ -103,6 +108,7 @@ This template includes modern development tools for a better developer experienc
 - **Vitest**: Fast unit testing framework
 
 Available development commands:
+
 ```bash
 npm run dev          # Start local development server
 npm run format       # Format code with Biome

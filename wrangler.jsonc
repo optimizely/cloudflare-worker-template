@@ -6,7 +6,7 @@
 	"workers_dev": true,
 	"minify": true,
 	"upload_source_maps": true,
-  "account_id": "YOUR_ACCOUNT_ID",
+	"account_id": "YOUR_ACCOUNT_ID",
 	"vars": {
 		"OPTIMIZELY_SDK_KEY": "YOUR_SDK_KEY"
 	}
