@@ -25,19 +25,19 @@ export class CloudflareRequestHandler {
 	 * Create a new CloudflareRequestHandler instance.
 	 * @param {Object} ctx - Optional Cloudflare Worker execution context with waitUntil method
 	 */
-	constructor(ctx = null) {
+	constructor(ctx) {
 		this.ctx = ctx;
 	}
 
 	/**
 	 * Make a fetch request inside Cloudflare Workers.
-	 * @param {string} url - The request URL
+	 * @param {string} requestUrl - The request URL
 	 * @param {Record<string,string>} headers - Plain object of headers
 	 * @param {string} method - HTTP method (will be normalized to uppercase)
 	 * @param {any} data - Request body. Objects will be JSON.stringified unless already FormData/ArrayBuffer/Blob.
-	 * @returns {{responsePromise: Promise<{status:number,ok:boolean,body:any,headers:Object}>, abort: ()=>void}}
+	 * @returns {{responsePromise: Promise<{statusCode:number,body:string,headers:Object}>, abort: ()=>void}}
 	 */
-	makeRequest(url, headers = {}, method = "GET", data) {
+	makeRequest(requestUrl, headers, method, data) {
 		const controller = new AbortController();
 		method = (method || "GET").toUpperCase();
 		headers = new Headers(headers || {});
@@ -48,23 +48,11 @@ export class CloudflareRequestHandler {
 			signal: controller.signal,
 		};
 
-		if (data !== undefined) {
-			if (typeof data === "object") {
-				try {
-					requestOptions.body = JSON.stringify(data);
-					if (!headers.has("Content-Type")) {
-						headers.set("Content-Type", "application/json");
-					}
-				} catch {
-					throw new TypeError("Failed to stringify request body");
-				}
-			} else {
-				// Assume string
-				requestOptions.body = data;
-			}
+		if (data) {
+			requestOptions.body = data;
 		}
 
-		const responsePromise = fetch(url, requestOptions)
+		const responsePromise = fetch(requestUrl, requestOptions)
 			.then(async (response) => {
 				const contentType = response.headers.get("content-type") || "";
 				let body;
@@ -79,14 +67,13 @@ export class CloudflareRequestHandler {
 					try {
 						body = await response.text();
 					} catch {
-						body = null;
+						body = "";
 					}
 				}
 
 				return {
-					status: response.status,
-					ok: response.ok,
-					body,
+					statusCode: response.status,
+					body: typeof body === "string" ? body : JSON.stringify(body),
 					headers:
 						response.headers && typeof response.headers.entries === "function"
 							? Object.fromEntries(response.headers.entries())

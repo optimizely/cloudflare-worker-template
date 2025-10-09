@@ -38,9 +38,8 @@ describe("CloudflareRequestHandler", () => {
 		);
 
 		const res = await responsePromise;
-		expect(res.status).toBe(200);
-		expect(res.ok).toBe(true);
-		expect(res.body).toEqual({ hello: "world" });
+		expect(res.statusCode).toBe(200);
+		expect(res.body).toBe(JSON.stringify({ hello: "world" }));
 		expect(res.headers["content-type"]).toContain("application/json");
 	});
 
@@ -71,7 +70,7 @@ describe("CloudflareRequestHandler", () => {
 		);
 
 		const res = await responsePromise;
-		expect(res.status).toBe(201);
+		expect(res.statusCode).toBe(201);
 		expect(res.body).toBe("plain text body");
 	});
 
