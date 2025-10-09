@@ -64,33 +64,49 @@ async function handleRequest(request, env, ctx) {
 	const userId = cookies[OPTIMIZELY_USER_ID_COOKIE_NAME] || crypto.randomUUID();
 
 	// Get the cached Optimizely client (refreshes datafile if needed)
-	const optimizelyClient = await getOptimizelyClient(env, ctx);
-
-	const optimizelyUserContext = optimizelyClient.createUserContext(userId, {
-		// Add optional user attributes here as key-value pairs for example
-		// location: "New York City",
-		// device: "mobile"
-	});
-
-	// Decide for a single flag
-	const decision = optimizelyUserContext.decide("YOUR_FLAG_HERE");
-	if (decision.enabled) {
-		console.info(
-			`The Flag "${
-				decision.flagKey
-			}" was Enabled for the user "${decision.userContext.getUserId()}"`,
+	let optimizelyClient;
+	try {
+		optimizelyClient = await getOptimizelyClient(env, ctx);
+	} catch (error) {
+		console.error("Failed to initialize Optimizely client, continuing without feature flags:", error);
+		// Continue without Optimizely - return normal response
+		const headers = new Headers();
+		headers.set("Content-Type", "text/plain");
+		headers.set(
+			"Set-Cookie",
+			cookie.serialize(OPTIMIZELY_USER_ID_COOKIE_NAME, userId),
 		);
-	} else {
-		console.info(
-			`The Flag "${
-				decision.flagKey
-			}" was Not Enabled for the user "${decision.userContext.getUserId()}"`,
+		return new Response(
+			"Welcome to the Optimizely Starter template. Feature flags unavailable.",
+			{ headers },
 		);
 	}
 
-	// Decide for all flags
-	const allDecisions = optimizelyUserContext.decideAll();
-	Object.entries(allDecisions).forEach(([_flagKey, decision]) => {
+	let optimizelyUserContext;
+	try {
+		optimizelyUserContext = optimizelyClient.createUserContext(userId, {
+			// Add optional user attributes here as key-value pairs for example
+			// location: "New York City",
+			// device: "mobile"
+		});
+	} catch (error) {
+		console.error("Failed to create Optimizely user context, continuing without feature flags:", error);
+		// Continue without Optimizely
+		const headers = new Headers();
+		headers.set("Content-Type", "text/plain");
+		headers.set(
+			"Set-Cookie",
+			cookie.serialize(OPTIMIZELY_USER_ID_COOKIE_NAME, userId),
+		);
+		return new Response(
+			"Welcome to the Optimizely Starter template. Feature flags unavailable.",
+			{ headers },
+		);
+	}
+
+	// Decide for a single flag
+	try {
+		const decision = optimizelyUserContext.decide("YOUR_FLAG_HERE");
 		if (decision.enabled) {
 			console.info(
 				`The Flag "${
@@ -104,7 +120,31 @@ async function handleRequest(request, env, ctx) {
 				}" was Not Enabled for the user "${decision.userContext.getUserId()}"`,
 			);
 		}
-	});
+	} catch (error) {
+		console.error("Failed to decide for single flag, continuing:", error);
+	}
+
+	// Decide for all flags
+	try {
+		const allDecisions = optimizelyUserContext.decideAll();
+		Object.entries(allDecisions).forEach(([_flagKey, decision]) => {
+			if (decision.enabled) {
+				console.info(
+					`The Flag "${
+						decision.flagKey
+					}" was Enabled for the user "${decision.userContext.getUserId()}"`,
+				);
+			} else {
+				console.info(
+					`The Flag "${
+						decision.flagKey
+					}" was Not Enabled for the user "${decision.userContext.getUserId()}"`,
+				);
+			}
+		});
+	} catch (error) {
+		console.error("Failed to decide for all flags, continuing:", error);
+	}
 
 	const headers = new Headers();
 	headers.set("Content-Type", "text/plain");
