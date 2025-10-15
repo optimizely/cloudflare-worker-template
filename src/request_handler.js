@@ -54,26 +54,11 @@ export class CloudflareRequestHandler {
 
 		const responsePromise = fetch(requestUrl, requestOptions)
 			.then(async (response) => {
-				const contentType = response.headers.get("content-type") || "";
-				let body;
-				try {
-					if (contentType.includes("application/json")) {
-						body = await response.json();
-					} else {
-						body = await response.text();
-					}
-				} catch {
-					// If parsing fails, fallback to text
-					try {
-						body = await response.text();
-					} catch {
-						body = "";
-					}
-				}
-
+				const body = await response.text() ?? "";
+				
 				return {
 					statusCode: response.status,
-					body: typeof body === "string" ? body : JSON.stringify(body),
+					body,
 					headers:
 						response.headers && typeof response.headers.entries === "function"
 							? Object.fromEntries(response.headers.entries())
