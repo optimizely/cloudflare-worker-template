@@ -1,32 +1,185 @@
 /**
- *    Copyright 2021-2022 Optimizely and contributors
+ * Copyright 2021-2022, 2025 Optimizely
  *
- *    Licensed under the Apache License, Version 2.0 (the "License");
- *    you may not use this file except in compliance with the License.
- *    You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *        http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  *
- *    Unless required by applicable law or agreed to in writing, software
- *    distributed under the License is distributed on an "AS IS" BASIS,
- *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *    See the License for the specific language governing permissions and
- *    limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
-export async function getDatafile(sdkKey, ttl) {
-  const datafileResponse = await fetch(
-    `https://cdn.optimizely.com/datafiles/${sdkKey}.json`,
-    { cf: { cacheTtl: ttl } }
-  );
-  return await datafileResponse.text();
+import {
+	createEventDispatcher,
+	createForwardingEventProcessor,
+	createInstance,
+	createStaticProjectConfigManager,
+} from "@optimizely/optimizely-sdk/universal";
+import { CloudflareRequestHandler } from "./request_handler";
+
+/**
+ * Client engine identifier for Optimizely SDK telemetry.
+ * @type {string}
+ */
+const CLOUDFLARE_CLIENT_ENGINE = "javascript-sdk/cloudflare";
+
+/**
+ * Default cache TTL for the Optimizely datafile in seconds.
+ * Can be overridden via the OPTIMIZELY_DATAFILE_CACHE_TTL_SECONDS environment variable.
+ * @type {number}
+ * @example
+ * // Set in wrangler.jsonc:
+ * // "OPTIMIZELY_DATAFILE_CACHE_TTL_SECONDS": "600" // 10 minutes
+ */
+const DEFAULT_DATAFILE_CACHE_TTL_SECONDS = 300; // 5 minutes
+
+/**
+ * Module-scope cache for the Optimizely datafile to avoid redundant CDN requests.
+ * @type {string|null}
+ */
+let cachedDatafile = null;
+
+/**
+ * Timestamp (milliseconds since epoch) of the last successful datafile fetch.
+ * @type {number}
+ */
+let lastDatafileUpdate = 0;
+
+/**
+ * Get the datafile cache TTL in seconds from environment variables.
+ *
+ * Reads OPTIMIZELY_DATAFILE_CACHE_TTL_SECONDS and returns it as an integer.
+ * Falls back to DEFAULT_DATAFILE_CACHE_TTL_SECONDS if not set or invalid.
+ *
+ * @param {Object} env - Environment variables object
+ * @returns {number} TTL in seconds
+ */
+function getDatafileCacheTTL(env) {
+	const envValue = env?.OPTIMIZELY_DATAFILE_CACHE_TTL_SECONDS;
+
+	if (envValue === undefined || envValue === null) {
+		return DEFAULT_DATAFILE_CACHE_TTL_SECONDS;
+	}
+
+	const parsedValue = Number.parseInt(envValue, 10);
+	if (Number.isNaN(parsedValue) || parsedValue < 0) {
+		console.warn(
+			`Invalid OPTIMIZELY_DATAFILE_CACHE_TTL_SECONDS value: "${envValue}". ` +
+				`Using default: ${DEFAULT_DATAFILE_CACHE_TTL_SECONDS} seconds.`,
+		);
+		return DEFAULT_DATAFILE_CACHE_TTL_SECONDS;
+	}
+
+	return parsedValue;
 }
 
-export function dispatchEvent({ url, params }) {
-  const eventRequest = new Request(url, {
-    method: "POST",
-    body: JSON.stringify(params)
-  });
+/**
+ * Fetch the Optimizely datafile from the CDN.
+ *
+ * The datafile contains all project configuration including flags, experiments,
+ * audiences, and variations. This function makes a direct HTTP request to the
+ * Optimizely CDN without using the execution context.
+ *
+ * @param {string} sdkKey - The Optimizely SDK key for the project
+ * @returns {Promise<string>} The datafile JSON as a string
+ * @throws {Error} If the HTTP request fails or returns an error status
+ * @see https://docs.developers.optimizely.com/feature-experimentation/docs/get-the-datafile
+ */
+export async function getDatafile(sdkKey) {
+	// Datafile fetching doesn't need context since it's not dispatching events
+	const requestHandler = new CloudflareRequestHandler();
+	const url = `https://cdn.optimizely.com/datafiles/${sdkKey}.json`;
+	const { responsePromise } = requestHandler.makeRequest(url, {}, "GET");
+	const response = await responsePromise;
+	return response.body;
+}
 
-  return fetch(eventRequest);
+/**
+ * Get or create an Optimizely client instance with cached datafile management.
+ *
+ * This function implements smart caching:
+ * - Caches the datafile in module scope to avoid redundant CDN requests
+ * - Refreshes the datafile when the TTL expires
+ * - Falls back to stale datafile if refresh fails (resilience pattern)
+ * - Creates a new client instance per request with request-specific context
+ *
+ * The client is configured for Cloudflare Workers with:
+ * - Static project config manager (no polling)
+ * - Forwarding event processor for immediate event dispatch
+ * - Disposable mode for edge environment optimization
+ *
+ * @param {Object} env - Environment bindings containing OPTIMIZELY_SDK_KEY and optional cache configuration
+ * @param {string} env.OPTIMIZELY_SDK_KEY - Required: The Optimizely project SDK key
+ * @param {string} [env.OPTIMIZELY_DATAFILE_CACHE_TTL_SECONDS] - Optional: Cache TTL in seconds (default: 300)
+ * @param {ExecutionContext} ctx - Cloudflare Worker execution context for managing async event dispatch
+ * @returns {Promise<Object>} Configured Optimizely client instance
+ * @throws {Error} If OPTIMIZELY_SDK_KEY is missing or initial datafile fetch fails
+ * @see https://docs.developers.optimizely.com/feature-experimentation/docs/initialize-the-javascript-sdk
+ */
+export async function getOptimizelyClient(env, ctx) {
+	const now = Date.now();
+
+	const sdkKey = env.OPTIMIZELY_SDK_KEY;
+	if (!sdkKey) {
+		throw new Error(
+			"OPTIMIZELY_SDK_KEY environment variable is required. " +
+				"Set it in wrangler.jsonc or use: wrangler secret put OPTIMIZELY_SDK_KEY",
+		);
+	}
+
+	// Get cache TTL from environment (defaults to 5 minutes)
+	const cacheTTLSeconds = getDatafileCacheTTL(env);
+
+	// Check if we need to refresh the cached datafile
+	const isDatafileStale = now - lastDatafileUpdate > cacheTTLSeconds * 1000;
+	if (!cachedDatafile || isDatafileStale) {
+		try {
+			cachedDatafile = await getDatafile(sdkKey);
+			lastDatafileUpdate = now;
+		} catch (error) {
+			// If fetch fails and we have a cached datafile, continue with stale data
+			if (cachedDatafile) {
+				console.error(
+					"Failed to fetch fresh datafile, using cached version:",
+					error,
+				);
+			} else {
+				// No cached datafile available - this is a critical error
+				console.error(
+					"Failed to fetch datafile and no cached version available:",
+					error,
+				);
+				throw new Error(
+					`Unable to initialize Optimizely: Failed to fetch datafile for SDK key ${sdkKey}. ${error.message}`,
+				);
+			}
+		}
+	}
+
+	// Create a new client instance for each request with the request-specific context
+	// Use the same request handler instance for both event dispatching and any SDK requests
+	const contextualRequestHandler = new CloudflareRequestHandler(ctx);
+
+	const projectConfigManager = createStaticProjectConfigManager({
+		datafile: cachedDatafile,
+	});
+
+	const eventDispatcher = createEventDispatcher(contextualRequestHandler);
+	const eventProcessor = createForwardingEventProcessor(eventDispatcher);
+
+	// https://docs.developers.optimizely.com/feature-experimentation/docs/initialize-the-javascript-sdk
+	const optimizelyClient = createInstance({
+		projectConfigManager,
+		eventProcessor,
+		requestHandler: contextualRequestHandler,
+		clientEngine: CLOUDFLARE_CLIENT_ENGINE,
+		disposable: true, // Enable auto-disposal for edge environment
+	});
+
+	return optimizelyClient;
 }

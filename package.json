@@ -1,20 +1,28 @@
 {
-  "private": true,
-  "name": "optimizely-cloudflare-worker-template",
-  "version": "0.1.0",
-  "description": "A template for kick starting a Cloudflare Workers project with Optimizely",
-  "main": "src/index.js",
-  "scripts": {
-    "format": "prettier --write '**/*.{js,css,json,md}'"
-  },
-  "author": "Zeeshan Ashraf <zashraf@folio3.com>",
-  "license": "ISC",
-  "devDependencies": {
-    "prettier": "^1.18.2"
-  },
-  "dependencies": {
-    "@optimizely/optimizely-sdk": "^4.9.1",
-    "cookie": "^0.4.2",
-    "uuid": "^8.3.2"
-  }
+	"name": "optimizely-cloudflare-worker-template",
+	"description": "A template for kick starting a Cloudflare Workers project with Optimizely",
+	"version": "1.0.0",
+	"license": "Apache-2.0",
+	"type": "module",
+	"main": "src/index.js",
+	"private": true,
+	"scripts": {
+		"format": "biome format --write",
+		"lint": "biome check --write",
+		"test": "vitest run",
+		"precommit": "npm run lint && npm run format && npm run test",
+		"dev": "miniflare src/index.js --wrangler --env development",
+		"start": "miniflare src/index.js --wrangler",
+		"build": "npx wrangler deploy --dry-run --outdir dist"
+	},
+	"dependencies": {
+		"@optimizely/optimizely-sdk": "^6.1.0",
+		"cookie": "^1.0.2"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "^2.2.4",
+		"miniflare": "^4.20250917.0",
+		"vitest": "^3.2.4",
+		"vitest-environment-miniflare": "^2.14.4"
+	}
 }

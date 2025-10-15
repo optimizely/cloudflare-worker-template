@@ -1,119 +1,165 @@
 /**
- *    Copyright 2021-2022 Optimizely and contributors
+ * Copyright 2021-2022, 2025 Optimizely
  *
- *    Licensed under the Apache License, Version 2.0 (the "License");
- *    you may not use this file except in compliance with the License.
- *    You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *        http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  *
- *    Unless required by applicable law or agreed to in writing, software
- *    distributed under the License is distributed on an "AS IS" BASIS,
- *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *    See the License for the specific language governing permissions and
- *    limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
-import { v4 } from "uuid";
 import cookie from "cookie";
-import {
-  createInstance,
-  enums as OptimizelyEnums
-} from "@optimizely/optimizely-sdk/dist/optimizely.lite.min.js";
-import {
-  getDatafile,
-  dispatchEvent,
- } from "./optimizely_helper";
+import { getOptimizelyClient } from "./optimizely_helper";
 
-const CLOUDFLARE_CLIENT_ENGINE = "javascript-sdk/cloudflare";
+/**
+ * Cookie name used to store the Optimizely user ID for consistent user experience
+ * across requests from the same browser session.
+ * @type {string}
+ */
 const OPTIMIZELY_USER_ID_COOKIE_NAME = "optimizely_user_id";
 
-addEventListener("fetch", event => {
-  event.respondWith(handleRequest(event));
-});
+/**
+ * Cloudflare Worker export interface.
+ * Handles incoming HTTP requests using the fetch handler pattern.
+ * @see https://developers.cloudflare.com/workers/runtime-apis/handlers/fetch/
+ */
+export default {
+	/**
+	 * Main fetch handler for the Cloudflare Worker.
+	 * @param {Request} request - The incoming HTTP request
+	 * @param {Object} env - Environment bindings (secrets, KV namespaces, etc.)
+	 * @param {ExecutionContext} ctx - Execution context for managing async operations
+	 * @returns {Promise<Response>} HTTP response
+	 */
+	async fetch(request, env, ctx) {
+		return handleRequest(request, env, ctx);
+	},
+};
 
-async function handleRequest(event) {
-  const cookies = cookie.parse(event.request.headers.get("Cookie") || '');
+/**
+ * Handle incoming HTTP requests and perform Optimizely feature flag decisions.
+ *
+ * This function demonstrates:
+ * - Retrieving or generating a user ID from cookies
+ * - Creating an Optimizely user context
+ * - Making single and batch flag decisions
+ * - Setting cookies for user persistence
+ *
+ * @param {Request} request - The incoming HTTP request
+ * @param {Object} env - Environment bindings containing OPTIMIZELY_SDK_KEY and optional configuration
+ * @param {ExecutionContext} ctx - Cloudflare Worker execution context for managing async operations
+ * @returns {Promise<Response>} HTTP response with decision results
+ */
+async function handleRequest(request, env, ctx) {
+	const cookies = cookie.parse(request.headers.get("Cookie") || "");
 
-  // Fetch user Id from the cookie if available to make sure that a returning user from same browser session always sees the same variation.
-  const userId = cookies[OPTIMIZELY_USER_ID_COOKIE_NAME] || v4();
+	// Fetch user Id from the cookie if available to make sure that a returning user from
+	// same browser session always sees the same variation.
+	const userId = cookies[OPTIMIZELY_USER_ID_COOKIE_NAME] || crypto.randomUUID();
 
-  // fetch datafile from optimizely CDN and cache it with cloudflare for the given number of seconds
-  const datafile = await getDatafile("YOUR_SDK_KEY_HERE", 600);
+	// Get the cached Optimizely client (refreshes datafile if needed)
+	let optimizelyClient;
+	try {
+		optimizelyClient = await getOptimizelyClient(env, ctx);
+	} catch (error) {
+		console.error(
+			"Failed to initialize Optimizely client, continuing without feature flags:",
+			error,
+		);
+		// Continue without Optimizely - return normal response
+		const headers = new Headers();
+		headers.set("Content-Type", "text/plain");
+		headers.set(
+			"Set-Cookie",
+			cookie.serialize(OPTIMIZELY_USER_ID_COOKIE_NAME, userId),
+		);
+		return new Response(
+			"Welcome to the Optimizely Starter template. Feature flags unavailable.",
+			{ headers },
+		);
+	}
 
-  const optimizelyClient = createInstance({
-    datafile,
+	let optimizelyUserContext;
+	try {
+		optimizelyUserContext = optimizelyClient.createUserContext(userId, {
+			// Add optional user attributes here as key-value pairs for example
+			// location: "New York City",
+			// device: "mobile"
+		});
+	} catch (error) {
+		console.error(
+			"Failed to create Optimizely user context, continuing without feature flags:",
+			error,
+		);
+		// Continue without Optimizely
+		const headers = new Headers();
+		headers.set("Content-Type", "text/plain");
+		headers.set(
+			"Set-Cookie",
+			cookie.serialize(OPTIMIZELY_USER_ID_COOKIE_NAME, userId),
+		);
+		return new Response(
+			"Welcome to the Optimizely Starter template. Feature flags unavailable.",
+			{ headers },
+		);
+	}
 
-    // keep the LOG_LEVEL to ERROR in production. Setting LOG_LEVEL to INFO or DEBUG can adversely impact performance.
-    logLevel: OptimizelyEnums.LOG_LEVEL.ERROR,
+	// Decide for a single flag
+	try {
+		const decision = optimizelyUserContext.decide("YOUR_FLAG_HERE");
+		if (decision.enabled) {
+			console.info(
+				`The Flag "${
+					decision.flagKey
+				}" was Enabled for the user "${decision.userContext.getUserId()}"`,
+			);
+		} else {
+			console.info(
+				`The Flag "${
+					decision.flagKey
+				}" was Not Enabled for the user "${decision.userContext.getUserId()}"`,
+			);
+		}
+	} catch (error) {
+		console.error("Failed to decide for single flag, continuing:", error);
+	}
 
-    clientEngine: CLOUDFLARE_CLIENT_ENGINE
+	// Decide for all flags
+	try {
+		const allDecisions = optimizelyUserContext.decideAll();
+		Object.entries(allDecisions).forEach(([_flagKey, decision]) => {
+			if (decision.enabled) {
+				console.info(
+					`The Flag "${
+						decision.flagKey
+					}" was Enabled for the user "${decision.userContext.getUserId()}"`,
+				);
+			} else {
+				console.info(
+					`The Flag "${
+						decision.flagKey
+					}" was Not Enabled for the user "${decision.userContext.getUserId()}"`,
+				);
+			}
+		});
+	} catch (error) {
+		console.error("Failed to decide for all flags, continuing:", error);
+	}
 
-    /***
-     * Optional event dispatcher. Please uncomment the following line if you want to dispatch an impression event to optimizely logx backend.
-     * When enabled, an event is dispatched asynchronously. It does not impact the response time for a particular worker but it will
-     * add to the total compute time of the worker and can impact cloudflare billing.
-     */
-
-    /* eventDispatcher: {
-      dispatchEvent: optimizelyEvent => {
-        // Tell cloudflare to wait for this promise to fullfill.
-        event.waitUntil(dispatchEvent(optimizelyEvent));
-      }
-    }, */
-
-    /* Add other Optimizely SDK initialization options here if needed */
-  });
-
-  const optimizelyUserContext = optimizelyClient.createUserContext(
-    userId,
-    {
-      /* YOUR_OPTIONAL_ATTRIBUTES_HERE */
-    }
-  );
-
-  // --- Using Optimizely Config
-  const optimizelyConfig = optimizelyClient.getOptimizelyConfig();
-
-  // --- For a single flag --- //
-  const decision = optimizelyUserContext.decide("YOUR_FLAG_HERE");
-  if (decision.enabled) {
-    console.log(
-      `The Flag "${
-        decision.flagKey
-      }" was Enabled for the user "${decision.userContext.getUserId()}"`
-    );
-  } else {
-    console.log(
-      `The Flag "${
-        decision.flagKey
-      }" was Not Enabled for the user "${decision.userContext.getUserId()}"`
-    );
-  }
-
-  // --- For all flags --- //
-  const allDecisions = optimizelyUserContext.decideAll();
-  Object.entries(allDecisions).forEach(([flagKey, decision]) => {
-    if (decision.enabled) {
-      console.log(
-        `The Flag "${
-          decision.flagKey
-        }" was Enabled for the user "${decision.userContext.getUserId()}"`
-      );
-    } else {
-      console.log(
-        `The Flag "${
-          decision.flagKey
-        }" was Not Enabled for the user "${decision.userContext.getUserId()}"`
-      );
-    }
-  });
-
-  let headers = new Headers();
-  headers.set("Content-Type", "text/plain");
-  headers.set("Set-Cookie", cookie.serialize(OPTIMIZELY_USER_ID_COOKIE_NAME, userId));
-  return new Response(
-    "Welcome to the Optimizely Starter template. Check logs for decision results.",
-    { headers },
-  );
+	const headers = new Headers();
+	headers.set("Content-Type", "text/plain");
+	headers.set(
+		"Set-Cookie",
+		cookie.serialize(OPTIMIZELY_USER_ID_COOKIE_NAME, userId),
+	);
+	return new Response(
+		"Welcome to the Optimizely Starter template. Check logs for decision results.",
+		{ headers },
+	);
 }
