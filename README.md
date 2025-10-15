@@ -28,19 +28,22 @@ Refer to the [Optimizely Cloudflare Workers Starter Kit documentation](https://d
 
 ### Install the Starter Kit
 
-1. Generate a project using this sample template.
+1. Clone a specific tagged version of this template to create your project.
 
+   ```bash
+   git clone --branch v1.0.0 --depth 1 https://github.com/optimizely/cloudflare-worker-template.git my-project
+   cd my-project
    ```
-   wrangler generate projectname https://github.com/optimizely/cloudflare-worker-template
-   ```
 
-2. Add `account_id` in `wrangler.jsonc`. If you do not know the account ID, run `wrangler dev` and the CLI will prompt you with the account ID and the instructions to add it.
+   > **Note**: Replace `my-project` with your desired project name and `v1.0.0` with your desired [release version](https://github.com/optimizely/cloudflare-worker-template/releases).
 
-3. Install node packages.
+2. Install node packages.
 
-   ```
+   ```bash
    npm install
    ```
+
+3. Add `account_id` in `wrangler.jsonc`. If you do not know the account ID, run `wrangler whoami` or `wrangler dev` and the CLI will prompt you with the account ID and the instructions to add it.
 
 4. **Configure your Optimizely SDK Key**:
 
