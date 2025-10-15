@@ -11,8 +11,8 @@ Optimizely Rollouts is [free feature flags](https://www.optimizely.com/free-feat
 Get up and running in under 2 minutes:
 
 ```bash
-# 1. Clone the template (use latest release tag)
-git clone --branch v1.0.0 --depth 1 https://github.com/optimizely/cloudflare-worker-template.git my-project
+# 1. Clone the template (replace vX.Y.Z with the latest release tag from https://github.com/optimizely/cloudflare-worker-template/releases)
+git clone --branch vX.Y.Z --depth 1 https://github.com/optimizely/cloudflare-worker-template.git my-project
 cd my-project
 
 # 2. Install dependencies
