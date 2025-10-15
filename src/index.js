@@ -68,7 +68,10 @@ async function handleRequest(request, env, ctx) {
 	try {
 		optimizelyClient = await getOptimizelyClient(env, ctx);
 	} catch (error) {
-		console.error("Failed to initialize Optimizely client, continuing without feature flags:", error);
+		console.error(
+			"Failed to initialize Optimizely client, continuing without feature flags:",
+			error,
+		);
 		// Continue without Optimizely - return normal response
 		const headers = new Headers();
 		headers.set("Content-Type", "text/plain");
@@ -90,7 +93,10 @@ async function handleRequest(request, env, ctx) {
 			// device: "mobile"
 		});
 	} catch (error) {
-		console.error("Failed to create Optimizely user context, continuing without feature flags:", error);
+		console.error(
+			"Failed to create Optimizely user context, continuing without feature flags:",
+			error,
+		);
 		// Continue without Optimizely
 		const headers = new Headers();
 		headers.set("Content-Type", "text/plain");

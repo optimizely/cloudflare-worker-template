@@ -60,11 +60,11 @@ if (typeof global.Response === "undefined") {
 		}
 
 		async text() {
-			return this.body;
+			return String(this.body);
 		}
 
 		async json() {
-			return JSON.parse(this.body);
+			return JSON.parse(String(this.body));
 		}
 	};
 }

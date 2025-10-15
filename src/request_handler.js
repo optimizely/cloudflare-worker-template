@@ -54,8 +54,8 @@ export class CloudflareRequestHandler {
 
 		const responsePromise = fetch(requestUrl, requestOptions)
 			.then(async (response) => {
-				const body = await response.text() ?? "";
-				
+				const body = (await response.text()) ?? "";
+
 				return {
 					statusCode: response.status,
 					body,
