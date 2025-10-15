@@ -6,6 +6,30 @@ Optimizely Feature Experimentation is an A/B testing and feature management tool
 
 Optimizely Rollouts is [free feature flags](https://www.optimizely.com/free-feature-flagging/) for development teams. You can easily roll out and roll back features in any application without code deploys, mitigating risk for every feature on your roadmap.
 
+## Quick Start
+
+Get up and running in under 2 minutes:
+
+```bash
+# 1. Clone the template (use latest release tag)
+git clone --branch v1.0.0 --depth 1 https://github.com/optimizely/cloudflare-worker-template.git my-project
+cd my-project
+
+# 2. Install dependencies
+npm install
+
+# 3. Set your Optimizely SDK key (get it from Settings > Environments in your Optimizely dashboard)
+cp .env.example .env
+# Edit .env and add your SDK key
+
+# 4. Start local development server
+npm run dev
+
+# 5. Visit http://localhost:8787 to see your worker in action!
+```
+
+For detailed setup instructions, see the [Get Started](#get-started) section below.
+
 ## Features
 
 - **Modern ES Modules**: Uses ES module syntax for better tree-shaking and modern JavaScript features
@@ -20,11 +44,21 @@ Refer to the [Optimizely Cloudflare Workers Starter Kit documentation](https://d
 
 ### Prerequisites
 
-1. You will need an **Optimizely Account**. If you do not have an account, you can [register for a free account](https://www.optimizely.com/products/feature-experimentation/).
+**System Requirements:**
+- Node.js 18.x or higher (20.x or 22.x recommended)
+- npm 9.x or higher
 
-2. You will need to have a **Cloudflare Account with Workers**. For more information, visit the official [Cloudflare Workers product page here](https://workers.cloudflare.com/).
+**Accounts & Tools:**
 
-3. You will need to have **Wrangler CLI** installed. If you do not have it, you can install it by visiting the [Cloudflare Wrangler CLI page here](https://developers.cloudflare.com/workers/cli-wrangler).
+1. **Optimizely Account**: If you don't have an account, [register for a free account](https://www.optimizely.com/products/feature-experimentation/).
+
+2. **Cloudflare Account with Workers**: Visit the [Cloudflare Workers product page](https://workers.cloudflare.com/) to sign up.
+
+3. **Wrangler CLI**: Install via npm:
+   ```bash
+   npm install -g wrangler
+   ```
+   Or see the [Cloudflare Wrangler CLI documentation](https://developers.cloudflare.com/workers/cli-wrangler) for other installation methods.
 
 ### Install the Starter Kit
 
@@ -43,15 +77,12 @@ Refer to the [Optimizely Cloudflare Workers Starter Kit documentation](https://d
    npm install
    ```
 
-3. Add `account_id` in `wrangler.jsonc`. If you do not know the account ID, run `wrangler whoami` or `wrangler dev` and the CLI will prompt you with the account ID and the instructions to add it.
+3. **Configure your Optimizely SDK Key**:
 
-4. **Configure your Optimizely SDK Key**:
-
-   Copy the example environment file:
-
-   ```
-   cp .env.example .env
-   ```
+   First, get your SDK key from the Optimizely dashboard:
+   - Log into your [Optimizely account](https://app.optimizely.com/)
+   - Navigate to **Settings → Environments**
+   - Copy your SDK key from the desired environment (it looks like: `AbCdEf12345GhIjKlMnOp`)
 
    Then set your SDK key using one of these methods:
 
@@ -76,14 +107,35 @@ Refer to the [Optimizely Cloudflare Workers Starter Kit documentation](https://d
 
    **Option C: Using .env file for local development**
 
+   ```bash
+   cp .env.example .env
+   # Edit .env and add your SDK key
    ```
+
+   ```env
    OPTIMIZELY_SDK_KEY=your_sdk_key
    OPTIMIZELY_DATAFILE_CACHE_TTL_SECONDS=300  # Optional: cache TTL in seconds (default: 300)
    ```
 
-   > **Note**: Your SDK keys can be found in the Optimizely application under **Settings > Environments**.
+4. **Configure Cloudflare Account ID** (required for deployment):
 
-5. **Set up your account ID** (if deploying): Add `account_id` in `wrangler.jsonc`. If you don't know the account ID, run `wrangler whoami` or `wrangler dev` and the CLI will prompt you with instructions.
+   Add your `account_id` to `wrangler.jsonc`:
+
+   ```bash
+   # Find your account ID
+   wrangler whoami
+   ```
+
+   Then edit `wrangler.jsonc`:
+   ```jsonc
+   {
+     "name": "optimizely-cloudflare-worker",
+     "account_id": "your_account_id_here",  // Add this line
+     // ... rest of config
+   }
+   ```
+
+   > **Note**: You can skip this step for local development. The CLI will prompt you when needed.
 
 ## Project Structure
 
@@ -189,6 +241,64 @@ For more information about Cloudflare Workers, you may visit the following resou
 - [Cloudflare Workers tutorials](https://developers.cloudflare.com/workers/tutorials)
 - [Cloudflare Workers with Optimizely documentation](https://docs.developers.optimizely.com/feature-experimentation/docs/cloudflare-workers)
 
+## Troubleshooting
+
+### Common Issues
+
+**Problem: "OPTIMIZELY_SDK_KEY environment variable is required" error**
+
+**Solution:** Ensure you've set your SDK key using one of the methods in step 3:
+- Check that your `.env` file exists and contains `OPTIMIZELY_SDK_KEY=your_key`
+- Or verify `wrangler.jsonc` has the SDK key in the `vars` section
+- For production deployments, run: `wrangler secret put OPTIMIZELY_SDK_KEY`
+
+---
+
+**Problem: "Failed to fetch datafile" error**
+
+**Solution:** This usually means:
+- Your SDK key is incorrect or doesn't match an active Optimizely project
+- Network connectivity issues (check your internet connection)
+- The Optimizely CDN is temporarily unavailable (the worker will use cached data if available)
+
+---
+
+**Problem: "Account ID not found" when deploying**
+
+**Solution:**
+```bash
+# Find your account ID
+wrangler whoami
+
+# Add it to wrangler.jsonc under "account_id"
+```
+
+---
+
+**Problem: Local dev server won't start**
+
+**Solution:**
+- Ensure you're using Node.js 18+ (`node --version`)
+- Check if port 8787 is already in use
+- Try `npm run dev -- --port 8788` to use a different port
+
+---
+
+**Problem: Feature flags not working as expected**
+
+**Solution:**
+- Verify your flag key matches exactly (case-sensitive)
+- Check that the flag is enabled in your Optimizely project
+- Ensure the environment SDK key matches the environment where the flag is configured
+- Check browser console/worker logs for decision details
+
+---
+
+**Need more help?**
+- Check the [Optimizely Developer Docs](https://docs.developers.optimizely.com/feature-experimentation/docs/cloudflare-workers)
+- Visit the [Optimizely Community](https://community.optimizely.com/)
+- Open an issue on [GitHub](https://github.com/optimizely/cloudflare-worker-template/issues)
+
 ## SDK Development
 
 ### Contributing
@@ -198,7 +308,6 @@ Please see [CONTRIBUTING](CONTRIBUTING.md).
 ### Other Optimizely SDKs
 
 - Agent - https://github.com/optimizely/agent
-
 - Android - https://github.com/optimizely/android-sdk
 
 - C# - https://github.com/optimizely/csharp-sdk
