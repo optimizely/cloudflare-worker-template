@@ -220,63 +220,70 @@ describe("index.js - Cloudflare Worker", () => {
 			);
 		});
 
-	it("should handle Optimizely client errors gracefully", async () => {
-		mockRequest = new Request("https://example.com");
-		cookie.parse.mockReturnValue({});
-		getOptimizelyClient.mockRejectedValue(new Error("SDK Key missing"));
+		it("should handle Optimizely client errors gracefully", async () => {
+			mockRequest = new Request("https://example.com");
+			cookie.parse.mockReturnValue({});
+			getOptimizelyClient.mockRejectedValue(new Error("SDK Key missing"));
 
-		const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+			const consoleErrorSpy = vi
+				.spyOn(console, "error")
+				.mockImplementation(() => {});
 
-		const response = await workerExport.fetch(mockRequest, mockEnv, mockCtx);
-		expect(response.status).toBe(200);
-		expect(response.headers.get("Content-Type")).toBe("text/plain");
-		const text = await response.text();
-		expect(text).toContain("Feature flags unavailable");
-		expect(consoleErrorSpy).toHaveBeenCalledWith(
-			"Failed to initialize Optimizely client, continuing without feature flags:",
-			expect.any(Error),
-		);
+			const response = await workerExport.fetch(mockRequest, mockEnv, mockCtx);
+			expect(response.status).toBe(200);
+			expect(response.headers.get("Content-Type")).toBe("text/plain");
+			const text = await response.text();
+			expect(text).toContain("Feature flags unavailable");
+			expect(consoleErrorSpy).toHaveBeenCalledWith(
+				"Failed to initialize Optimizely client, continuing without feature flags:",
+				expect.any(Error),
+			);
 
-		consoleErrorSpy.mockRestore();
-	});
-
-	it("should handle decision errors gracefully", async () => {
-		mockRequest = new Request("https://example.com");
-		cookie.parse.mockReturnValue({});
-		mockUserContext.decide.mockImplementation(() => {
-			throw new Error("Decision error");
+			consoleErrorSpy.mockRestore();
 		});
 
-		const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+		it("should handle decision errors gracefully", async () => {
+			mockRequest = new Request("https://example.com");
+			cookie.parse.mockReturnValue({});
+			mockUserContext.decide.mockImplementation(() => {
+				throw new Error("Decision error");
+			});
 
-		const response = await workerExport.fetch(mockRequest, mockEnv, mockCtx);
-		expect(response.status).toBe(200);
-		expect(consoleErrorSpy).toHaveBeenCalledWith(
-			"Failed to decide for single flag, continuing:",
-			expect.any(Error),
-		);
+			const consoleErrorSpy = vi
+				.spyOn(console, "error")
+				.mockImplementation(() => {});
 
-		consoleErrorSpy.mockRestore();
-	});
+			const response = await workerExport.fetch(mockRequest, mockEnv, mockCtx);
+			expect(response.status).toBe(200);
+			expect(consoleErrorSpy).toHaveBeenCalledWith(
+				"Failed to decide for single flag, continuing:",
+				expect.any(Error),
+			);
 
-	it("should handle decideAll errors gracefully", async () => {
-		mockRequest = new Request("https://example.com");
-		cookie.parse.mockReturnValue({});
-		mockUserContext.decideAll.mockImplementation(() => {
-			throw new Error("DecideAll error");
+			consoleErrorSpy.mockRestore();
 		});
 
-		const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+		it("should handle decideAll errors gracefully", async () => {
+			mockRequest = new Request("https://example.com");
+			cookie.parse.mockReturnValue({});
+			mockUserContext.decideAll.mockImplementation(() => {
+				throw new Error("DecideAll error");
+			});
 
-		const response = await workerExport.fetch(mockRequest, mockEnv, mockCtx);
-		expect(response.status).toBe(200);
-		expect(consoleErrorSpy).toHaveBeenCalledWith(
-			"Failed to decide for all flags, continuing:",
-			expect.any(Error),
-		);
+			const consoleErrorSpy = vi
+				.spyOn(console, "error")
+				.mockImplementation(() => {});
 
-		consoleErrorSpy.mockRestore();
-	});		it("should preserve user ID when setting cookie for existing user", async () => {
+			const response = await workerExport.fetch(mockRequest, mockEnv, mockCtx);
+			expect(response.status).toBe(200);
+			expect(consoleErrorSpy).toHaveBeenCalledWith(
+				"Failed to decide for all flags, continuing:",
+				expect.any(Error),
+			);
+
+			consoleErrorSpy.mockRestore();
+		});
+		it("should preserve user ID when setting cookie for existing user", async () => {
 			mockRequest = new Request("https://example.com", {
 				headers: { Cookie: "optimizely_user_id=preserved-user-id" },
 			});

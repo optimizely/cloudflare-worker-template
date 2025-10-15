@@ -36,6 +36,7 @@ describe("Optimizely Helper", () => {
 					get: () => "application/json",
 					entries: () => [["content-type", "application/json"]],
 				},
+				text: vi.fn().mockResolvedValue('{"version": "4", "experiments": []}'),
 				json: vi.fn().mockResolvedValue('{"version": "4", "experiments": []}'),
 			};
 			global.fetch = vi.fn().mockResolvedValue(mockResponse);
@@ -105,6 +106,7 @@ describe("Optimizely Helper", () => {
 					get: () => "application/json",
 					entries: () => [["content-type", "application/json"]],
 				},
+				text: vi.fn().mockResolvedValue('{"version": "4"}'),
 				json: vi.fn().mockResolvedValue('{"version": "4"}'),
 			});
 		});
@@ -135,9 +137,9 @@ describe("Optimizely Helper", () => {
 			expect(mockCreateStaticProjectConfigManager).toHaveBeenCalledWith({
 				datafile: '{"version": "4"}',
 			});
-			expect(mockCreateForwardingEventProcessor).toHaveBeenCalledWith({
-				eventDispatcher: expect.any(Object),
-			});
+			expect(mockCreateForwardingEventProcessor).toHaveBeenCalledWith(
+				expect.any(Object),
+			);
 			expect(mockCreateInstance).toHaveBeenCalledWith({
 				projectConfigManager: mockProjectConfigManager,
 				eventProcessor: mockEventProcessor,
@@ -189,6 +191,7 @@ describe("Optimizely Helper", () => {
 						get: () => "application/json",
 						entries: () => [["content-type", "application/json"]],
 					},
+					text: vi.fn().mockResolvedValue('{"version": "5"}'),
 					json: vi.fn().mockResolvedValue('{"version": "5"}'),
 				});
 
