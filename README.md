@@ -65,11 +65,12 @@ Refer to the [Optimizely Cloudflare Workers Starter Kit documentation](https://d
 1. Clone a specific tagged version of this template to create your project.
 
    ```bash
-   git clone --branch v1.0.0 --depth 1 https://github.com/optimizely/cloudflare-worker-template.git my-project
+   # Clone the template (replace vX.Y.Z with the latest release tag from https://github.com/optimizely/cloudflare-worker-template/releases)
+   git clone --branch vX.Y.Z --depth 1 https://github.com/optimizely/cloudflare-worker-template.git my-project
    cd my-project
    ```
 
-   > **Note**: Replace `my-project` with your desired project name and `v1.0.0` with your desired [release version](https://github.com/optimizely/cloudflare-worker-template/releases).
+   > **Note**: Replace `my-project` with your desired project name and `vX.Y.Z` with your desired [release version](https://github.com/optimizely/cloudflare-worker-template/releases).
 
 2. Install node packages.
 
