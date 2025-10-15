@@ -170,9 +170,7 @@ export async function getOptimizelyClient(env, ctx) {
 	});
 
 	const eventDispatcher = createEventDispatcher(contextualRequestHandler);
-	const eventProcessor = createForwardingEventProcessor({
-		eventDispatcher,
-	});
+	const eventProcessor = createForwardingEventProcessor(eventDispatcher);
 
 	// https://docs.developers.optimizely.com/feature-experimentation/docs/initialize-the-javascript-sdk
 	const optimizelyClient = createInstance({
