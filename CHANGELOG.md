@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [1.0.1] - July 31, 2026
+
+### Changed
+
+- Updated `@optimizely/optimizely-sdk` from `6.1.0` to `6.5.0`.
+- Updated `cookie` package from `1.0.2` to `2.0.1`. Migrated to the v2 API: `parse` → `parseCookie`, `serialize(name, value)` → `stringifySetCookie({ name, value })`.
+- Updated `@biomejs/biome` from `2.2.4` to `2.5.6`, and bumped the `biome.jsonc` schema version to match.
+- Updated `miniflare` from `4.20250917.0` to `4.20260730.0`.
+- Updated `vitest` from `3.2.4` to `4.1.10`.
+- Set minimum Node.js version to `22` via `engines` (required by `cookie@2` and `miniflare@4.20260730.0`); updated README requirements accordingly.
+
+### Added
+
+- `.gitattributes` normalizing line endings to LF across platforms, preventing CRLF churn from `biome --write` on Windows checkouts.
+
 ## [1.0.0] - October 10, 2025
 
 ### Changed
