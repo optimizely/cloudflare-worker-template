@@ -16,6 +16,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Updated `vitest` from `3.2.4` to `4.1.10`.
 - Set minimum Node.js version to `22` via `engines` (required by `cookie@2` and `miniflare@4.20260730.0`); updated README requirements accordingly.
 
+### Added
+
+- `.gitattributes` normalizing line endings to LF across platforms, preventing CRLF churn from `biome --write` on Windows checkouts.
+
 ## [1.0.0] - October 10, 2025
 
 ### Changed
