@@ -8,10 +8,8 @@ vi.mock("../src/optimizely_helper.js", () => ({
 
 // Mock cookie module
 vi.mock("cookie", () => ({
-	default: {
-		parse: vi.fn(),
-		serialize: vi.fn(),
-	},
+	parseCookie: vi.fn(),
+	stringifySetCookie: vi.fn(),
 }));
 
 describe("index.js - Cloudflare Worker", () => {
@@ -29,7 +27,10 @@ describe("index.js - Cloudflare Worker", () => {
 		const cookieModule = await import("cookie");
 
 		getOptimizelyClient = optimizelyHelper.getOptimizelyClient;
-		cookie = cookieModule.default;
+		cookie = {
+			parse: cookieModule.parseCookie,
+			serialize: cookieModule.stringifySetCookie,
+		};
 
 		// Set up mock decision
 		mockDecision = {
@@ -199,10 +200,10 @@ describe("index.js - Cloudflare Worker", () => {
 			const response = await workerExport.fetch(mockRequest, mockEnv, mockCtx);
 
 			expect(response.headers.get("Content-Type")).toBe("text/plain");
-			expect(cookie.serialize).toHaveBeenCalledWith(
-				"optimizely_user_id",
-				"test-uuid-123",
-			);
+			expect(cookie.serialize).toHaveBeenCalledWith({
+				name: "optimizely_user_id",
+				value: "test-uuid-123",
+			});
 			expect(response.headers.get("Set-Cookie")).toBe(
 				"optimizely_user_id=test-user-123; Path=/",
 			);
@@ -291,10 +292,10 @@ describe("index.js - Cloudflare Worker", () => {
 
 			await workerExport.fetch(mockRequest, mockEnv, mockCtx);
 
-			expect(cookie.serialize).toHaveBeenCalledWith(
-				"optimizely_user_id",
-				"preserved-user-id",
-			);
+			expect(cookie.serialize).toHaveBeenCalledWith({
+				name: "optimizely_user_id",
+				value: "preserved-user-id",
+			});
 			expect(mockOptimizelyClient.createUserContext).toHaveBeenCalledWith(
 				"preserved-user-id",
 				{},

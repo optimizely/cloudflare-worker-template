@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import cookie from "cookie";
+import { parseCookie, stringifySetCookie } from "cookie";
 import { getOptimizelyClient } from "./optimizely_helper";
 
 /**
@@ -57,7 +57,7 @@ export default {
  * @returns {Promise<Response>} HTTP response with decision results
  */
 async function handleRequest(request, env, ctx) {
-	const cookies = cookie.parse(request.headers.get("Cookie") || "");
+	const cookies = parseCookie(request.headers.get("Cookie") || "");
 
 	// Fetch user Id from the cookie if available to make sure that a returning user from
 	// same browser session always sees the same variation.
@@ -77,7 +77,10 @@ async function handleRequest(request, env, ctx) {
 		headers.set("Content-Type", "text/plain");
 		headers.set(
 			"Set-Cookie",
-			cookie.serialize(OPTIMIZELY_USER_ID_COOKIE_NAME, userId),
+			stringifySetCookie({
+				name: OPTIMIZELY_USER_ID_COOKIE_NAME,
+				value: userId,
+			}),
 		);
 		return new Response(
 			"Welcome to the Optimizely Starter template. Feature flags unavailable.",
@@ -102,7 +105,10 @@ async function handleRequest(request, env, ctx) {
 		headers.set("Content-Type", "text/plain");
 		headers.set(
 			"Set-Cookie",
-			cookie.serialize(OPTIMIZELY_USER_ID_COOKIE_NAME, userId),
+			stringifySetCookie({
+				name: OPTIMIZELY_USER_ID_COOKIE_NAME,
+				value: userId,
+			}),
 		);
 		return new Response(
 			"Welcome to the Optimizely Starter template. Feature flags unavailable.",
@@ -156,7 +162,10 @@ async function handleRequest(request, env, ctx) {
 	headers.set("Content-Type", "text/plain");
 	headers.set(
 		"Set-Cookie",
-		cookie.serialize(OPTIMIZELY_USER_ID_COOKIE_NAME, userId),
+		stringifySetCookie({
+			name: OPTIMIZELY_USER_ID_COOKIE_NAME,
+			value: userId,
+		}),
 	);
 	return new Response(
 		"Welcome to the Optimizely Starter template. Check logs for decision results.",
