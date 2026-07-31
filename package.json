@@ -1,11 +1,14 @@
 {
 	"name": "optimizely-cloudflare-worker-template",
 	"description": "A template for kick starting a Cloudflare Workers project with Optimizely",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"license": "Apache-2.0",
 	"type": "module",
 	"main": "src/index.js",
 	"private": true,
+	"engines": {
+		"node": ">=22"
+	},
 	"scripts": {
 		"format": "biome format --write",
 		"lint": "biome check --write",

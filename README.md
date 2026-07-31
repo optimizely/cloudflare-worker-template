@@ -45,7 +45,7 @@ Refer to the [Optimizely Cloudflare Workers Starter Kit documentation](https://d
 ### Prerequisites
 
 **System Requirements:**
-- Node.js 18.x or higher (20.x or 22.x recommended)
+- Node.js 22.x or higher (required by `cookie` and `miniflare`)
 - npm 9.x or higher
 
 **Accounts & Tools:**
@@ -279,7 +279,7 @@ wrangler whoami
 **Problem: Local dev server won't start**
 
 **Solution:**
-- Ensure you're using Node.js 18+ (`node --version`)
+- Ensure you're using Node.js 22+ (`node --version`)
 - Check if port 8787 is already in use
 - Try `npm run dev -- --port 8788` to use a different port
 
